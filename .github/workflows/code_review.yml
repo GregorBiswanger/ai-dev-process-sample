@@ -37,7 +37,7 @@ jobs:
               }
             ]
           }')
-        REVIEW_MESSAGE=$(echo $RESPONSE | jq -r .choices[0].message.content | tr -d '\n')
+        REVIEW_MESSAGE=$(echo $REVIEW_RESPONSE | jq -r .choices[0].message.content | tr -d '\n')
         echo "REVIEW_MESSAGE=$REVIEW_MESSAGE" >> $GITHUB_ENV
 
     - name: Comment on PR with OpenAI's review
