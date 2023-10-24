@@ -58,6 +58,6 @@ jobs:
     - name: Add issue to project
       uses: alex-page/github-project-automation-plus@v0.8.3
       with:
-        project-url: "https://github.com/users/GregorBiswanger/projects/1"
+        project: "ToDo App Sample"
         column: Todo
         repo-token: ${{ secrets.GHPROJECT_TOKEN }}
