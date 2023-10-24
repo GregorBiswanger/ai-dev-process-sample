@@ -31,11 +31,11 @@ jobs:
               },
               {
                 "role": "user",
-                "content": "Sourcecode von git diff: '"$ESCAPED_CONTENT"'"
+                "content": "$ESCAPED_CONTENT"
               }
             ],
             "temperature": 1,
-            "max_tokens": 500,
+            "max_tokens": 25000,
             "top_p": 1,
             "frequency_penalty": 0,
             "presence_penalty": 0
