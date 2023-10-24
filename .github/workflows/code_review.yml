@@ -20,10 +20,10 @@ jobs:
         echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
         PR_BODY="${{ github.event.pull_request.body }}"
         PR_TITLE="${{ github.event.pull_request.title }}"
-        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
-        COMBINED_CONTENT="$PR_TITLE: $PR_BODY $CODE_DIFF"
+        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '^[+-]' | grep -Ev '^(--- a/|\+\+\+ b/)')
+        COMBINED_CONTENT="$PR_TITLE: $PR_BODY\n\n$CODE_DIFF"
         ESCAPED_CONTENT=$(printf '%s' "$COMBINED_CONTENT" | jq -Rs .)
-        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
+        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"        
         REVIEW_RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
