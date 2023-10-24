@@ -1,0 +1,58 @@
+name: Issue Labeler and Project Adder
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  label_and_add_to_project:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Label issue
+      run: |
+        ISSUE_BODY="${{ github.event.issue.body }}"
+        RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{secrets.OPENAI_API_KEY}}" \
+          -d '{
+          "model": "gpt-4",
+          "messages": [
+            {
+              "role": "system",
+              "content": "Du bist ein Produktmanager für Software. Du bewertest Text ob dieser ein Bug oder ein Feature ist. Dabei antwortest du ausschließlich mit 'bug' oder 'feature' ohne weiteren Text."
+            },
+            {
+              "role": "user",
+              "content": "'"$ISSUE_BODY"'"
+            }
+          ],
+          "temperature": 1,
+          "max_tokens": 256,
+          "top_p": 1,
+          "frequency_penalty": 0,
+          "presence_penalty": 0
+        }')
+        LABEL=$(echo $RESPONSE | jq -r .choices[0].message.content | tr -d '\n')
+        echo "LABEL=$LABEL" >> $GITHUB_ENV
+
+    - name: Add label to issue
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          github.issues.addLabels({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ["$LABEL"]
+          })
+
+    - name: Add issue to project
+      uses: alex-page/github-project-automation-plus@v0.6.0
+      with:
+        project: "ToDo App Sample"
+        column: Todo
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
