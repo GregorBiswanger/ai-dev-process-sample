@@ -22,6 +22,7 @@ jobs:
         PR_TITLE="${{ github.event.pull_request.title }}"
         CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
         COMBINED_CONTENT="$PR_TITLE: $PR_BODY $CODE_DIFF"
+        echo "Length of combined content: ${#COMBINED_CONTENT}"
         REVIEW_RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
@@ -43,8 +44,12 @@ jobs:
             "frequency_penalty": 0,
             "presence_penalty": 0
           }')
+        echo "OpenAI Response: $REVIEW_RESPONSE"
         REVIEW_MESSAGE=$(echo $REVIEW_RESPONSE | jq -r .choices[0].message.content | tr -d '\n')
         echo "REVIEW_MESSAGE=$REVIEW_MESSAGE" >> $GITHUB_ENV
+        if [ -z "$REVIEW_MESSAGE" ]; then
+          REVIEW_MESSAGE="Es gab ein Problem bei der Überprüfung des Codes durch OpenAI. Bitte überprüfen Sie manuell."
+        fi
 
     - name: Comment on PR with OpenAI's review
       uses: actions/github-script@v3
