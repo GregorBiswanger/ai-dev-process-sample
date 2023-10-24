@@ -18,7 +18,9 @@ jobs:
 
     - name: Label issue
       run: |
+        ISSUE_TITLE="${{ github.event.issue.title }}"
         ISSUE_BODY="${{ github.event.issue.body }}"
+        COMBINED_CONTENT="$ISSUE_TITLE: $ISSUE_BODY"
         RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{secrets.OPENAI_API_KEY}}" \
@@ -27,11 +29,11 @@ jobs:
           "messages": [
             {
               "role": "system",
-              "content": "Du bist ein Produktmanager für Software. Du bewertest Text ob dieser ein Bug oder ein Feature ist. Dabei antwortest du ausschließlich mit 'bug' oder 'feature' ohne weiteren Text."
+              "content": "Du bist ein Produktmanager für Software. Du bewertest Text ob dieser ein Bug, Feature oder eine Frage ist. Dabei antwortest du ausschließlich mit 'bug', 'feature' oder 'question' ohne weiteren Text. Kannst du gar nichts zuordnen, antworte ausschließlich mit einer leeren Antwort."
             },
             {
               "role": "user",
-              "content": "'"$ISSUE_BODY"'"
+              "content": "'"$COMBINED_CONTENT"'"
             }
           ],
           "temperature": 1,
