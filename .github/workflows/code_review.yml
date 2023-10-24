@@ -20,7 +20,7 @@ jobs:
         echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
         PR_BODY="${{ github.event.pull_request.body }}"
         PR_TITLE="${{ github.event.pull_request.title }}"
-        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
         COMBINED_CONTENT="$PR_TITLE: $PR_BODY $CODE_DIFF"
         ESCAPED_CONTENT=$(printf '%s' "$COMBINED_CONTENT" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
