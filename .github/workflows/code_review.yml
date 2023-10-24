@@ -29,7 +29,7 @@ jobs:
         done
         
         ESCAPED_CONTENT=$(printf '%s' "$FILE_CONTENTS" | jq -Rs .)
-        
+        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
         REVIEW_RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
