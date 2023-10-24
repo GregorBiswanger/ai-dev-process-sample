@@ -1,64 +1,58 @@
-name: OpenAI Code Review on Pull Request
+name: Issue Labeler and Project Adder
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  issues:
+    types: [opened]
 
 jobs:
-  review_code:
+  label_and_add_to_project:
     runs-on: ubuntu-latest
+    permissions:
+        issues: write
+        pull-requests: write
+        contents: read
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Send code to OpenAI for review
+    - name: Label issue
       run: |
-        PR_BODY="${{ github.event.pull_request.body }}"
-        PR_TITLE="${{ github.event.pull_request.title }}"
-        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+        ISSUE_TITLE="${{ github.event.issue.title }}"
+        ISSUE_BODY="${{ github.event.issue.body }}"
+        COMBINED_CONTENT="$ISSUE_TITLE: $ISSUE_BODY"
         RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
-          -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+          -H "Authorization: Bearer ${{secrets.OPENAI_API_KEY}}" \
           -d '{
-            "model": "gpt-4",
-            "messages": [
-              {
-                "role": "system",
-                "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit 'Der Code gefällt mir.'."
-              },
-              {
-                "role": "user",
-                "content": "'"$PR_TITLE\n\n$PR_BODY\n\n$CODE_DIFF"'"
-              }
-            ]
-          }')
-        REVIEW_MESSAGE=$(echo $RESPONSE | jq -r .choices[0].message.content | tr -d '\n')
-        echo "REVIEW_MESSAGE=$REVIEW_MESSAGE" >> $GITHUB_ENV
+          "model": "gpt-4",
+          "messages": [
+            {
+              "role": "system",
+              "content": "Du bist ein Produktmanager für Software. Du bewertest Text ob dieser ein Bug, Feature oder eine Frage ist. Dabei antwortest du ausschließlich mit 'bug', 'feature' oder 'question' ohne weiteren Text. Kannst du gar nichts zuordnen, antworte ausschließlich mit einer leeren Antwort."
+            },
+            {
+              "role": "user",
+              "content": "'"$COMBINED_CONTENT"'"
+            }
+          ],
+          "temperature": 1,
+          "max_tokens": 256,
+          "top_p": 1,
+          "frequency_penalty": 0,
+          "presence_penalty": 0
+        }')
+        LABEL=$(echo $RESPONSE | jq -r .choices[0].message.content | tr -d '\n')
+        echo "LABEL=$LABEL" >> $GITHUB_ENV
 
-    - name: Comment on PR with OpenAI's review
+    - name: Add label to issue
       uses: actions/github-script@v3
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
-          const prNumber = ${{ github.event.pull_request.number }};
-          const reviewMessage = process.env.REVIEW_MESSAGE;
-          github.issues.createComment({
-            issue_number: prNumber,
+          github.issues.addLabels({
+            issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: reviewMessage
-          });
-
-    - name: Merge PR if review is positive
-      if: contains(env.REVIEW_MESSAGE, 'Der Code gefällt mir.') # Adjust this condition based on OpenAI's typical positive responses
-      uses: actions/github-script@v3
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const prNumber = ${{ github.event.pull_request.number }};
-          github.pulls.merge({
-            pull_number: prNumber,
-            owner: context.repo.owner,
-            repo: context.repo.repo
-          });
+            labels: [process.env.LABEL]
+          })
