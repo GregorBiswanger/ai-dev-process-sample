@@ -31,7 +31,7 @@ jobs:
               },
               {
                 "role": "user",
-                "content": "$ESCAPED_CONTENT"
+                "content": "'"$ESCAPED_CONTENT"'"
               }
             ],
             "temperature": 1,
