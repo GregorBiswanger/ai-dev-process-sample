@@ -23,22 +23,22 @@ jobs:
         CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | jq -Rs .)
 
         JSON_PAYLOAD=$(jq -n \
-                          --arg pr_title "$PR_TITLE" \
-                          --arg pr_body "$PR_BODY" \
-                          --arg code_diff "$CODE_DIFF" \
-                          '{
-                            "model": "gpt-4",
-                            "messages": [
-                              {
-                                "role": "system",
-                                "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit \u0027Der Code gefällt mir.\u0027."
-                              },
-                              {
-                                "role": "user",
-                                "content": $pr_title + "\n\n" + $pr_body + "\n\n" + $code_diff
-                              }
-                            ]
-                          }')
+        --arg pr_title "$PR_TITLE" \
+        --arg pr_body "$PR_BODY" \
+        --arg code_diff "$CODE_DIFF" \
+        '{
+          "model": "gpt-4",
+          "messages": [
+            {
+              "role": "system",
+              "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit \u0027Der Code gefällt mir.\u0027."
+            },
+            {
+              "role": "user",
+              "content": ($pr_title + "\n\n" + $pr_body + "\n\n" + $code_diff)
+            }
+          ]
+        }')
 
         REVIEW_RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
