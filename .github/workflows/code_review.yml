@@ -20,33 +20,25 @@ jobs:
         echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
         PR_BODY="${{ github.event.pull_request.body }}"
         PR_TITLE="${{ github.event.pull_request.title }}"
-        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | jq -Rs .)
-
-        JSON_PAYLOAD=$(jq -n \
-        --arg pr_title "$PR_TITLE" \
-        --arg pr_body "$PR_BODY" \
-        --arg code_diff "$CODE_DIFF" \
-        '{
-          "model": "gpt-4",
-          "messages": [
-            {
-              "role": "system",
-              "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit \u0027Der Code gefällt mir.\u0027."
-            },
-            {
-              "role": "user",
-              "content": ($pr_title + "\n\n" + $pr_body + "\n\n" + $code_diff)
-            }
-          ]
-        }')
-
-        REVIEW_RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
+        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+        REVIEW_RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-          -d "$JSON_PAYLOAD")
-
+          -d '{
+            "model": "gpt-4",
+            "messages": [
+              {
+                "role": "system",
+                "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit Der Code gefällt mir."
+              },
+              {
+                "role": "user",
+                "content": "'"${PR_TITLE}\n\n${PR_BODY}\n\n${CODE_DIFF}"'"
+              }
+            ]
+          }')
         REVIEW_MESSAGE=$(echo $REVIEW_RESPONSE | jq -r .choices[0].message.content)
-        echo "REVIEW_MESSAGE=$REVIEW_MESSAGE" >> $GITHUB_ENV
+        echo "$REVIEW_MESSAGE" > review_message.txt
 
     - name: Comment on PR with OpenAI's review
       uses: actions/github-script@v3
@@ -54,7 +46,8 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const prNumber = ${{ github.event.pull_request.number }};
-          const reviewMessage = process.env.REVIEW_MESSAGE;
+          const fs = require('fs');
+          const reviewMessage = fs.readFileSync('review_message.txt', 'utf8');
           github.issues.createComment({
             issue_number: prNumber,
             owner: context.repo.owner,
@@ -62,8 +55,8 @@ jobs:
             body: reviewMessage
           });
 
-    - name: Move associated issue to "Done" if review is positive
-      if: contains(env.REVIEW_MESSAGE, 'Der Code gefällt mir.') # Adjust this condition based on OpenAI's typical positive responses
+    - name: Merge PR if review is positive
+      if: contains(fromJSON('["$(cat review_message.txt)"]'), 'Der Code gefällt mir.') # Adjust this condition based on OpenAI's typical positive responses
       uses: actions/github-script@v3
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
