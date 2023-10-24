@@ -37,8 +37,8 @@ jobs:
               }
             ]
           }')
-        REVIEW_MESSAGE=$(echo $REVIEW_RESPONSE | jq -r .choices[0].message.content)
-        echo "$REVIEW_MESSAGE" > review_message.txt
+        REVIEW_MESSAGE=$(echo $RESPONSE | jq -r .choices[0].message.content | tr -d '\n')
+        echo "REVIEW_MESSAGE=$REVIEW_MESSAGE" >> $GITHUB_ENV
 
     - name: Comment on PR with OpenAI's review
       uses: actions/github-script@v3
@@ -46,8 +46,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const prNumber = ${{ github.event.pull_request.number }};
-          const fs = require('fs');
-          const reviewMessage = fs.readFileSync('review_message.txt', 'utf8');
+          const reviewMessage = process.env.REVIEW_MESSAGE;
           github.issues.createComment({
             issue_number: prNumber,
             owner: context.repo.owner,
@@ -56,7 +55,7 @@ jobs:
           });
 
     - name: Merge PR if review is positive
-      if: contains(fromJSON('["$(cat review_message.txt)"]'), 'Der Code gefällt mir.') # Adjust this condition based on OpenAI's typical positive responses
+      if: contains(env.REVIEW_MESSAGE, 'Der Code gefällt mir.') # Adjust this condition based on OpenAI's typical positive responses
       uses: actions/github-script@v3
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
