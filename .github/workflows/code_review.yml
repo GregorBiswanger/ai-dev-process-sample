@@ -23,7 +23,7 @@ jobs:
         CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
         COMBINED_CONTENT="$PR_TITLE: $PR_BODY $CODE_DIFF"
         ESCAPED_CONTENT=$(printf '%s' "$COMBINED_CONTENT" | jq -Rs .)
-        echo "ESCAPED_CONTENT: ${#ESCAPED_CONTENT}"
+        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
         REVIEW_RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
@@ -36,7 +36,7 @@ jobs:
               },
               {
                 "role": "user",
-                "content": "'"$ESCAPED_CONTENT"'"
+                "content": "$ESCAPED_CONTENT"
               }
             ],
             "temperature": 1,
