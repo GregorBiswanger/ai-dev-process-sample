@@ -16,16 +16,20 @@ jobs:
       id: openai_review
       run: |
         git fetch origin
-        echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
-        echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
-        PR_TITLE="${{ github.event.pull_request.title }}"
         PR_BODY="${{ github.event.pull_request.body }}"
-        ADDED_LINES=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '^+' | grep -Ev '^(--- a/|\+\+\+ b/)')
-        REMOVED_LINES=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '^-' | grep -Ev '^(--- a/|\+\+\+ b/)')
-        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '^[+-]' | grep -Ev '^(--- a/|\+\+\+ b/)')
-        COMBINED_CONTENT="Title: $PR_TITLE\n\nDescription: $PR_BODY\n\nAdded Lines:\n$ADDED_LINES\n\nRemoved Lines:\n$REMOVED_LINES"
-        ESCAPED_CONTENT=$(printf '%s' "$COMBINED_CONTENT" | jq -Rs .)        
-        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"        
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        
+        # Extrahieren Sie die Liste der geänderten Dateien
+        CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+        
+        # Extrahieren Sie den Inhalt der geänderten Dateien
+        FILE_CONTENTS=""
+        for file in $CHANGED_FILES; do
+          FILE_CONTENTS+="$file:\n\n$(cat $file)\n\n"
+        done
+        
+        ESCAPED_CONTENT=$(printf '%s' "$FILE_CONTENTS" | jq -Rs .)
+        
         REVIEW_RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
@@ -47,7 +51,7 @@ jobs:
             "frequency_penalty": 0,
             "presence_penalty": 0
           }')
-        echo "OpenAI Response: $REVIEW_RESPONSE"
+        
         REVIEW_MESSAGE=$(echo $REVIEW_RESPONSE | jq -r .choices[0].message.content | tr -d '\n')
         echo "REVIEW_MESSAGE=$REVIEW_MESSAGE" >> $GITHUB_ENV
         if [ -z "$REVIEW_MESSAGE" ]; then
