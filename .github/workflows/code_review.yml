@@ -42,7 +42,7 @@ jobs:
               },
               {
                 "role": "user",
-                "content": "$ESCAPED_CONTENT"
+                "content": "Mein Sourcecode aus git diff --name-only\n\n###\n\n$ESCAPED_CONTENT"
               }
             ],
             "temperature": 1,
