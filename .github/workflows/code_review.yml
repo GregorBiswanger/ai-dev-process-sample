@@ -31,7 +31,7 @@ jobs:
                             "messages": [
                               {
                                 "role": "system",
-                                "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit 'Der Code gefällt mir.'."
+                                "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit \u0027Der Code gefällt mir.\u0027."
                               },
                               {
                                 "role": "user",
