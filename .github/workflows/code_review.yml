@@ -16,7 +16,7 @@ jobs:
       id: openai_review
       run: |
         git fetch origin
-        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
         ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
         REVIEW_RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
