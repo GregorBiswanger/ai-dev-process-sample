@@ -16,19 +16,8 @@ jobs:
       id: openai_review
       run: |
         git fetch origin
-        PR_BODY="${{ github.event.pull_request.body }}"
-        PR_TITLE="${{ github.event.pull_request.title }}"
-        
-        # Extrahieren Sie die Liste der geänderten Dateien
-        CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
-        
-        # Extrahieren Sie den Inhalt der geänderten Dateien
-        FILE_CONTENTS=""
-        for file in $CHANGED_FILES; do
-          FILE_CONTENTS+="$file:\n\n$(cat $file)\n\n"
-        done
-        
-        ESCAPED_CONTENT=$(printf '%s' "$FILE_CONTENTS" | jq -Rs .)
+        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+        ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
         REVIEW_RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
@@ -38,15 +27,15 @@ jobs:
             "messages": [
               {
                 "role": "system",
-                "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit Der Code gefällt mir."
+                "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit Der Code gefällt mir. Schreibe am ende immer meine komplette Nachricht die du erhalten hast."
               },
               {
                 "role": "user",
-                "content": "'$ESCAPED_CONTENT'"
+                "content": "Sourcecode von git diff: $ESCAPED_CONTENT"
               }
             ],
             "temperature": 1,
-            "max_tokens": 256,
+            "max_tokens": 500,
             "top_p": 1,
             "frequency_penalty": 0,
             "presence_penalty": 0
