@@ -17,9 +17,8 @@ jobs:
       run: |
         git fetch origin
         CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
-        echo "CODE_DIFF: $CODE_DIFF"  # Debugging
         ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
-        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"  # Debugging
+        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
         
         REVIEW_RESPONSE=$(jq -n \
                             --arg content "$ESCAPED_CONTENT" \
@@ -46,12 +45,10 @@ jobs:
              -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
              -d @-)
         
-        echo "REVIEW_RESPONSE: $REVIEW_RESPONSE"  # Debugging
         REVIEW_MESSAGE=$(echo $REVIEW_RESPONSE | jq -r .choices[0].message.content)
-        FORMATTED_REVIEW_MESSAGE="```\n$REVIEW_MESSAGE\n```" # Wrap the message in code blocks for formatting
-        echo "FORMATTED_REVIEW_MESSAGE: $FORMATTED_REVIEW_MESSAGE"  # Debugging
-        if [ -z "$FORMATTED_REVIEW_MESSAGE" ]; then
-          FORMATTED_REVIEW_MESSAGE="Es gab ein Problem bei der Überprüfung des Codes durch OpenAI. Bitte überprüfen Sie manuell."
+        echo "REVIEW_MESSAGE=$REVIEW_MESSAGE" >> $GITHUB_ENV
+        if [ -z "$REVIEW_MESSAGE" ]; then
+          REVIEW_MESSAGE="Es gab ein Problem bei der Überprüfung des Codes durch OpenAI. Bitte überprüfen Sie manuell."
         fi
 
     - name: Comment on PR with OpenAI's review
@@ -60,7 +57,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const prNumber = ${{ github.event.pull_request.number }};
-          const reviewMessage = process.env.FORMATTED_REVIEW_MESSAGE;
+          const reviewMessage = process.env.REVIEW_MESSAGE;
           github.issues.createComment({
             issue_number: prNumber,
             owner: context.repo.owner,
@@ -69,7 +66,7 @@ jobs:
           });
 
     - name: Merge PR if review is positive
-      if: contains(env.FORMATTED_REVIEW_MESSAGE, 'Ich gebe den PR frei') # Adjust this condition based on OpenAI's typical positive responses
+      if: contains(env.REVIEW_MESSAGE, 'Ich gebe den PR frei') # Adjust this condition based on OpenAI's typical positive responses
       uses: actions/github-script@v3
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
