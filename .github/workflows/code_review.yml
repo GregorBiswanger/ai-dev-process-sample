@@ -15,7 +15,6 @@ jobs:
     - name: Send code to OpenAI for review
       id: openai_review
       run: |
-        set -e  # Stop the script if any command fails
         git fetch origin
         CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
         echo "CODE_DIFF: $CODE_DIFF"  # Debugging
