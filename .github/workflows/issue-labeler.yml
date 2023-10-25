@@ -21,27 +21,31 @@ jobs:
         ISSUE_TITLE="${{ github.event.issue.title }}"
         ISSUE_BODY="${{ github.event.issue.body }}"
         COMBINED_CONTENT="$ISSUE_TITLE: $ISSUE_BODY"
+        
+        JSON_PAYLOAD=$(echo '{
+          "model": "gpt-4",
+          "messages": [
+            {
+              "role": "system",
+              "content": "Du bist ein Produktmanager für Software. Du bewertest GitHub Issue Text ob dieser ein Bug, Feature oder eine Frage ist. Dabei antwortest du ausschließlich mit '\''bug'\'', '\''feature'\'', oder '\''question'\'' ohne weiteren Text. Kannst du gar nichts zuordnen, antworte ausschließlich mit einer leeren Antwort."
+            },
+            {
+              "role": "user",
+              "content": "'"$COMBINED_CONTENT"'"
+            }
+          ],
+          "temperature": 1,
+          "max_tokens": 256,
+          "top_p": 1,
+          "frequency_penalty": 0,
+          "presence_penalty": 0
+        }')
+
         RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{secrets.OPENAI_API_KEY}}" \
-          -d "{
-          \"model\": \"gpt-4\",
-          \"messages\": [
-            {
-              \"role\": \"system\",
-              \"content\": \"Du bist ein Produktmanager für Software. Du bewertest GitHub Issue Text ob dieser ein Bug, Feature oder eine Frage ist. Dabei antwortest du ausschließlich mit 'bug', 'feature' oder 'question' ohne weiteren Text. Kannst du gar nichts zuordnen, antworte ausschließlich mit einer leeren Antwort.\"
-            },
-            {
-              \"role\": \"user\",
-              \"content\": \"${COMBINED_CONTENT}\"
-            }
-          ],
-          \"temperature\": 1,
-          \"max_tokens\": 256,
-          \"top_p\": 1,
-          \"frequency_penalty\": 0,
-          \"presence_penalty\": 0
-        }")
+          -d "$JSON_PAYLOAD")
+          
         LABEL=$(echo $RESPONSE | jq -r .choices[0].message.content | tr -d '\n')
         echo "LABEL=$LABEL" >> $GITHUB_ENV
 
