@@ -1,0 +1,70 @@
+name: Generate Documentation with OpenAI and Update Wiki
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  generate-documentation:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Send code to OpenAI for documentation
+      id: openai_documentation
+      run: |
+        git fetch origin
+        CODE_DIFF=$(git diff HEAD~1 HEAD --unified=0)
+        ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
+        
+        DOCUMENTATION_RESPONSE=$(jq -n \
+                            --arg content "$ESCAPED_CONTENT" \
+                            '{
+                                "model": "gpt-4",
+                                "messages": [
+                                    {
+                                        "role": "system",
+                                        "content": "Du bist ein Software-Dokumentations-Experte. Erstelle eine Dokumentation basierend auf dem gegebenen Sourcecode. Erkläre dabei nicht den Inhalt vom Sourcecode selbst, sondern wie dieser Code verwendet werden kann. Antworte im Format GitHub Flavored Markdown (GFM)."
+                                    },
+                                    {
+                                        "role": "user",
+                                        "content": $content
+                                    }
+                                ],
+                                "temperature": 1,
+                                "max_tokens": 4096,
+                                "top_p": 1,
+                                "frequency_penalty": 0,
+                                "presence_penalty": 0
+                            }' | \
+        curl -X POST https://api.openai.com/v1/chat/completions \
+             -H "Content-Type: application/json" \
+             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+             -d @-)
+        
+        DOCUMENTATION=$(echo $DOCUMENTATION_RESPONSE | jq -r .choices[0].message.content)
+        echo "DOCUMENTATION=$DOCUMENTATION" > documentation.md
+
+    - name: Commit to Wiki
+      run: |
+        # Konfigurieren Sie Git
+        git config user.name "GitHub Actions Bot"
+        git config user.email "gregor.biswanger@web-enliven.de"
+
+        # Klonen Sie das Wiki-Repository
+        git clone https://github.com/GregorBiswanger/ai-dev-process-sample.wiki.git wiki
+
+        # Kopieren Sie die generierte Dokumentation ins Wiki-Repository
+        cp documentation.md wiki/
+
+        # Commit und Push
+        cd wiki
+        git add .
+        git commit -m "Update documentation"
+        git push
