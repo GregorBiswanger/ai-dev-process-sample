@@ -29,11 +29,11 @@ jobs:
           "messages": [
             {
               "role": "system",
-              "content": "Du bist ein Produktmanager für Software. Du bewertest Text ob dieser ein Bug, Feature oder eine Frage ist. Dabei antwortest du ausschließlich mit 'bug', 'feature' oder 'question' ohne weiteren Text. Kannst du gar nichts zuordnen, antworte ausschließlich mit einer leeren Antwort."
+              "content": "Du bist ein Produktmanager für Software. Du bewertest GitHub Issue Text ob dieser ein Bug, Feature oder eine Frage ist. Dabei antwortest du ausschließlich mit 'bug', 'feature' oder 'question' ohne weiteren Text. Kannst du gar nichts zuordnen, antworte ausschließlich mit einer leeren Antwort."
             },
             {
               "role": "user",
-              "content": "'"$COMBINED_CONTENT"'"
+              "content": "$COMBINED_CONTENT"
             }
           ],
           "temperature": 1,
