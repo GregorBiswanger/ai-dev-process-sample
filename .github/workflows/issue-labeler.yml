@@ -1,4 +1,4 @@
-name: Issue Labeler and Project Adder
+name: OpenAI Issue Labeler
 
 on:
   issues:
