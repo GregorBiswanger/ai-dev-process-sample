@@ -46,7 +46,8 @@ jobs:
              -d @-)
         
         REVIEW_MESSAGE=$(echo $REVIEW_RESPONSE | jq -r .choices[0].message.content)
-        echo "REVIEW_MESSAGE=$REVIEW_MESSAGE" >> $GITHUB_ENV
+        REVIEW_MESSAGE_ESCAPED=$(echo "$REVIEW_MESSAGE" | sed ':a;N;$!ba;s/\n/__NEWLINE__/g')
+        echo "REVIEW_MESSAGE=$REVIEW_MESSAGE_ESCAPED" >> $GITHUB_ENV
         if [ -z "$REVIEW_MESSAGE" ]; then
           REVIEW_MESSAGE="Es gab ein Problem bei der Überprüfung des Codes durch OpenAI. Bitte überprüfen Sie manuell."
         fi
@@ -57,7 +58,8 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const prNumber = ${{ github.event.pull_request.number }};
-          const reviewMessage = process.env.REVIEW_MESSAGE;
+          let reviewMessage = process.env.REVIEW_MESSAGE;
+          reviewMessage = reviewMessage.split('__NEWLINE__').join('\n');
           github.issues.createComment({
             issue_number: prNumber,
             owner: context.repo.owner,
