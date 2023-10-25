@@ -18,8 +18,8 @@ jobs:
 
     - name: Label issue
       run: |
-        ISSUE_TITLE="${{ github.event.issue.title }}"
-        ISSUE_BODY="${{ github.event.issue.body }}"
+        ISSUE_TITLE=$(echo "${{ github.event.issue.title }}" | jq -Rs .)
+        ISSUE_BODY=$(echo "${{ github.event.issue.body }}" | jq -Rs .)
         COMBINED_CONTENT="$ISSUE_TITLE: $ISSUE_BODY"
         
         JSON_PAYLOAD=$(jq -n \
