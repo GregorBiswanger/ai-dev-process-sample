@@ -2,13 +2,12 @@ name: Generate Documentation with OpenAI and Update Wiki
 
 on:
   pull_request:
+    types: [closed]
     branches:
       - main
-    types:
-      - closed
 
 jobs:
-  generate-documentation:
+  generate_documentation:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
@@ -17,13 +16,13 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Send code to OpenAI for documentation
-      id: openai_documentation
+      id: openai_doc
       run: |
         git fetch origin
-        CODE_DIFF=$(git diff HEAD~1 HEAD --unified=0)
+        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
         ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
         
-        DOCUMENTATION_RESPONSE=$(jq -n \
+        DOC_RESPONSE=$(jq -n \
                             --arg content "$ESCAPED_CONTENT" \
                             '{
                                 "model": "gpt-4",
@@ -48,23 +47,14 @@ jobs:
              -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
              -d @-)
         
-        DOCUMENTATION=$(echo $DOCUMENTATION_RESPONSE | jq -r .choices[0].message.content)
-        echo "DOCUMENTATION=$DOCUMENTATION" > documentation.md
+        DOCUMENTATION=$(echo $DOC_RESPONSE | jq -r .choices[0].message.content)
+        echo "DOCUMENTATION=$DOCUMENTATION" >> $GITHUB_ENV
 
-    - name: Commit to Wiki
-      run: |
-        # Konfigurieren Sie Git
-        git config user.name "GitHub Actions Bot"
-        git config user.email "gregor.biswanger@web-enliven.de"
-
-        # Klonen Sie das Wiki-Repository
-        git clone https://github.com/GregorBiswanger/ai-dev-process-sample.wiki.git wiki
-
-        # Kopieren Sie die generierte Dokumentation ins Wiki-Repository
-        cp documentation.md wiki/
-
-        # Commit und Push
-        cd wiki
-        git add .
-        git commit -m "Update documentation"
-        git push
+    - name: Update Wiki with Documentation
+      uses: docker://decathlon/wiki-page-creator-action:latest
+      env:
+        GH_PAT: ${{ secrets.GHPROJECT_TOKEN }}
+        ACTION_MAIL: gregor.biswanger@web-enliven.de
+        ACTION_NAME: GregorBiswanger
+        OWNER: ${{ github.repository_owner }}
+        REPO_NAME: ${{ github.repository }}
