@@ -19,27 +19,31 @@ jobs:
         CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
         ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
-        REVIEW_RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
-          -H "Content-Type: application/json" \
-          -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-          -d '{
-            "model": "gpt-4",
-            "messages": [
-              {
-                "role": "system",
-                "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit Der Code gefällt mir. Schreibe am ende immer meine komplette Nachricht die du erhalten hast. Sag mir wenn diese auch leer war."
-              },
-              {
-                "role": "user",
-                "content": '$ESCAPED_CONTENT'
-              }
-            ],
-            "temperature": 1,
-            "max_tokens": 4096,
-            "top_p": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0
-          }')
+        
+        REVIEW_RESPONSE=$(jq -n \
+                            --arg content "$ESCAPED_CONTENT" \
+                            '{
+                                "model": "gpt-4",
+                                "messages": [
+                                    {
+                                        "role": "system",
+                                        "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich mit Der Code gefällt mir. Schreibe am ende immer meine komplette Nachricht die du erhalten hast. Sag mir wenn diese auch leer war."
+                                    },
+                                    {
+                                        "role": "user",
+                                        "content": $content
+                                    }
+                                ],
+                                "temperature": 1,
+                                "max_tokens": 4096,
+                                "top_p": 1,
+                                "frequency_penalty": 0,
+                                "presence_penalty": 0
+                            }' | \
+        curl -X POST https://api.openai.com/v1/chat/completions \
+             -H "Content-Type: application/json" \
+             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+             -d @-)
         
         REVIEW_MESSAGE=$(echo $REVIEW_RESPONSE | jq -r .choices[0].message.content | tr -d '\n')
         echo "REVIEW_MESSAGE=$REVIEW_MESSAGE" >> $GITHUB_ENV
