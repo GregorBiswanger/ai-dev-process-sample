@@ -27,7 +27,7 @@ jobs:
                                 "messages": [
                                     {
                                         "role": "system",
-                                        "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich exakt mit dem Text: Der Code gefällt mir."
+                                        "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich exakt mit dem Text: Ich gebe den PR frei. Bei keinen ernsthaften Problemen, füge am Ende von deiner Antwort den exakt den Text: Ich gebe den PR frei. Wenn ernsthafte schwierigkeiten entdeckt wurden, schreibe auf keinen Fall den Text: Ich gebe den PR frei."
                                     },
                                     {
                                         "role": "user",
@@ -66,7 +66,7 @@ jobs:
           });
 
     - name: Merge PR if review is positive
-      if: contains(env.REVIEW_MESSAGE, 'Der Code gefällt mir.') # Adjust this condition based on OpenAI's typical positive responses
+      if: contains(env.REVIEW_MESSAGE, 'Ich gebe den PR frei') # Adjust this condition based on OpenAI's typical positive responses
       uses: actions/github-script@v3
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
