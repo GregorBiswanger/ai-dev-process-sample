@@ -49,10 +49,12 @@ jobs:
                   nodes {
                     fields(first: 10) {
                       nodes {
-                        name
-                        options {
-                          id
+                        ... on ProjectV2Field {
                           name
+                          options {
+                            id
+                            name
+                          }
                         }
                       }
                     }
@@ -65,7 +67,6 @@ jobs:
             repo
           });
 
-          // Replace 'Your Project Name' with the actual name of your project
           const reviewColumnId = projectData.repository.projectsV2.nodes[0]
             .fields.nodes.find(field => field.name === 'Status')
             .options.find(option => option.name === 'Review').id;
