@@ -16,14 +16,16 @@ jobs:
             const repoName = context.repo.repo;
             const ownerName = context.repo.owner;
 
-            // GraphQL query to get linked issues (items) from the pull request
+            // GraphQL query to get linked issues from the pull request
             const query = `
               query($owner: String!, $repo: String!, $prNumber: Int!) {
                 repository(owner: $owner, name: $repo) {
                   pullRequest(number: $prNumber) {
-                    projectItems(first: 10) {
+                    closingIssuesReferences(first: 10) {
                       nodes {
                         id
+                        number
+                        title
                       }
                     }
                   }
@@ -38,14 +40,14 @@ jobs:
             };
 
             const response = await github.graphql(query, variables);
-            const linkedItems = response.repository.pullRequest.projectItems.nodes;
+            const linkedIssues = response.repository.pullRequest.closingIssuesReferences.nodes;
 
-            if (linkedItems.length === 0) {
+            if (linkedIssues.length === 0) {
               console.log("Keine verknüpften Issues gefunden.");
             } else {
               console.log("Gefundene verknüpfte Issues:");
-              linkedItems.forEach(item => {
-                console.log(`Issue #${item.content.number}: ${item.content.title}`);
+              linkedIssues.forEach(issue => {
+                console.log(`Issue #${issue.number}: ${issue.title}`);
               });
             }
 
