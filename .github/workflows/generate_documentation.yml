@@ -11,16 +11,25 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Holt alle Commits
 
-    - name: Get Changed Files and Content
+    - name: Ermittle die letzten drei Commits
+      id: last_commits
       run: |
-        LAST_COMMIT_SHA=${{ github.event.client_payload.last_commit_sha }}
-        echo "LAST_COMMIT_SHA: $LAST_COMMIT_SHA"
-        echo "Current HEAD SHA:"
-        git rev-parse HEAD
-        echo "Changed files between $LAST_COMMIT_SHA and HEAD:"
-        git diff --name-only $LAST_COMMIT_SHA HEAD
-        CHANGED_FILES=$(git diff --name-only $LAST_COMMIT_SHA HEAD)
+        LAST_COMMIT_SHA=$(git rev-parse HEAD)
+        SECOND_LAST_COMMIT_SHA=$(git rev-parse HEAD~1)
+        THIRD_LAST_COMMIT_SHA=$(git rev-parse HEAD~2)
+        echo "LAST_COMMIT_SHA=$LAST_COMMIT_SHA" >> $GITHUB_ENV
+        echo "SECOND_LAST_COMMIT_SHA=$SECOND_LAST_COMMIT_SHA" >> $GITHUB_ENV
+        echo "THIRD_LAST_COMMIT_SHA=$THIRD_LAST_COMMIT_SHA" >> $GITHUB_ENV
+
+    - name: Ermittle geänderte Dateien
+      run: |
+        CHANGED_FILES=""
+        CHANGED_FILES+=$(git diff --name-only $THIRD_LAST_COMMIT_SHA $SECOND_LAST_COMMIT_SHA)
+        CHANGED_FILES+=$(git diff --name-only $SECOND_LAST_COMMIT_SHA $LAST_COMMIT_SHA)
+        CHANGED_FILES+=$(git diff --name-only $LAST_COMMIT_SHA HEAD)
         CHANGED_CONTENT=""
         for file in $CHANGED_FILES; do
           CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n")
@@ -28,7 +37,9 @@ jobs:
         done
         ESCAPED_CONTENT=$(printf '%s' "$CHANGED_CONTENT" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
-        
+
+    - name: Send Content to OpenAI for Documentation
+      run: |
         DOC_RESPONSE=$(jq -n \
                             --arg content "$ESCAPED_CONTENT" \
                             '{
