@@ -51,7 +51,7 @@ jobs:
               });
 
               // Replace with your project field ID and option ID for the Review column
-              const fieldId = 'board';
+              const fieldId = '1';
               const optionId = '9fbcdcc0';
 
               for (const issue of linkedIssues) {
