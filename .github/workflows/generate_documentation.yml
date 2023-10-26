@@ -24,7 +24,7 @@ jobs:
         git checkout pr-$PR_NUMBER
 
         CHANGED_CONTENT=""
-        FILES=$(find . -type f -not -path "./.github/*")
+        FILES=$(find . -type f -not -path "./.github/*" -not -path "./.git/*")
         for file in $FILES; do
           CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n")
           CHANGED_CONTENT+=$(cat $file)
