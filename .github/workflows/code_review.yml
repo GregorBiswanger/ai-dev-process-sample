@@ -79,3 +79,19 @@ jobs:
             owner: context.repo.owner,
             repo: context.repo.repo
           });
+
+    - name: Trigger Repository Dispatch
+      if: contains(env.REVIEW_MESSAGE, 'Ich gebe den PR frei')
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          github.repos.createDispatchEvent({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            event_type: 'pull_request_merged',
+            client_payload: {
+              pr_number: ${{ github.event.pull_request.number }}
+            }
+          });
+    
