@@ -2,7 +2,8 @@ name: Generate Documentation with OpenAI and Update Wiki
 
 on:
   pull_request:
-    types: [closed]
+    types:
+      - closed
 
 jobs:
   generate_documentation:
