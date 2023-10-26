@@ -51,7 +51,7 @@ jobs:
         # Erstellen eines Ordners für die Dokumentation
         mkdir documentation
         # Speichern der Dokumentation als Markdown-Datei
-        echo "$DOCUMENTATION" > documentation/documentation.md
+        echo "$DOCUMENTATION" > documentation/Home.md
 
     - name: Update Wiki with Documentation
       uses: docker://decathlon/wiki-page-creator-action:latest
