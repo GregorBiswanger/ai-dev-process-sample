@@ -41,7 +41,7 @@ jobs:
 
           const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
 
-          // Get the ID of the "Review" column
+          // Get the details of the fields
           const projectData = await github.graphql(`
             query($owner: String!, $repo: String!) {
               repository(owner: $owner, name: $repo) {
@@ -49,16 +49,10 @@ jobs:
                   nodes {
                     fields(first: 10) {
                       nodes {
-                        ... on ProjectV2Field {
-                          name
-                          dataType
-                          ... on ProjectV2SingleSelectField {
-                            options {
-                              id
-                              name
-                            }
-                          }
-                        }
+                        id
+                        name
+                        settings
+                        dataType
                       }
                     }
                   }
@@ -70,24 +64,5 @@ jobs:
             repo
           });
 
-          const reviewColumnId = projectData.repository.projectsV2.nodes[0]
-            .fields.nodes.find(field => field.name === 'Status' && field.options)
-            .options.find(option => option.name === 'Review').id;
-
-          for (const issue of issues) {
-            // Move the issue to the "Review" column
-            const mutation = `
-              mutation($issueId: ID!, $columnId: ID!) {
-                addProjectV2ItemById(input: {projectId: $columnId, contentId: $issueId}) {
-                  item {
-                    id
-                  }
-                }
-              }
-            `;
-
-            await github.graphql(mutation, {
-              issueId: `Issue-${issue.number}`,
-              columnId: reviewColumnId
-            });
-          }
+          // Output the details of the fields
+          console.log(JSON.stringify(projectData, null, 2));
