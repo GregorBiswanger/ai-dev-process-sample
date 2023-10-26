@@ -66,38 +66,59 @@ jobs:
             repo: context.repo.repo,
             body: reviewMessage
           });
-
-    - name: Merge PR if review is positive
-      if: contains(env.REVIEW_MESSAGE, 'Ich gebe den PR frei') # Adjust this condition based on OpenAI's typical positive responses
-      uses: actions/github-script@v3
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const prNumber = ${{ github.event.pull_request.number }};
-          github.pulls.merge({
-            pull_number: prNumber,
-            owner: context.repo.owner,
-            repo: context.repo.repo
-          });
-
-    - name: Trigger Repository Dispatch
+          
+    - name: Assign PR to GregorBiswanger if review is positive
       if: contains(env.REVIEW_MESSAGE, 'Ich gebe den PR frei')
       uses: actions/github-script@v3
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const pr = await github.pulls.get({
+          const prNumber = ${{ github.event.pull_request.number }};
+          github.issues.addAssignees({
+            issue_number: prNumber,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            pull_number: ${{ github.event.pull_request.number }}
+            assignees: ['GregorBiswanger']
           });
-          const lastCommitSha = pr.data.head.sha;
-          github.repos.createDispatchEvent({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            event_type: 'pull_request_merged',
-            client_payload: {
-              pr_number: ${{ github.event.pull_request.number }},
-              last_commit_sha: lastCommitSha
-            }
-          });
+    
+    - name: Fail if review is not positive
+      if: ${{ !contains(env.REVIEW_MESSAGE, 'Ich gebe den PR frei') }}
+      run: |
+        echo "Review nicht bestanden. Der Merge des Pull Requests wird verhindert."
+        exit 1
+    
+
+    # - name: Merge PR if review is positive
+    #   if: contains(env.REVIEW_MESSAGE, 'Ich gebe den PR frei') # Adjust this condition based on OpenAI's typical positive responses
+    #   uses: actions/github-script@v3
+    #   with:
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+    #     script: |
+    #       const prNumber = ${{ github.event.pull_request.number }};
+    #       github.pulls.merge({
+    #         pull_number: prNumber,
+    #         owner: context.repo.owner,
+    #         repo: context.repo.repo
+    #       });
+
+    # - name: Trigger Repository Dispatch
+    #   if: contains(env.REVIEW_MESSAGE, 'Ich gebe den PR frei')
+    #   uses: actions/github-script@v3
+    #   with:
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+    #     script: |
+    #       const pr = await github.pulls.get({
+    #         owner: context.repo.owner,
+    #         repo: context.repo.repo,
+    #         pull_number: ${{ github.event.pull_request.number }}
+    #       });
+    #       const lastCommitSha = pr.data.head.sha;
+    #       github.repos.createDispatchEvent({
+    #         owner: context.repo.owner,
+    #         repo: context.repo.repo,
+    #         event_type: 'pull_request_merged',
+    #         client_payload: {
+    #           pr_number: ${{ github.event.pull_request.number }},
+    #           last_commit_sha: lastCommitSha
+    #         }
+    #       });
