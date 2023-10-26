@@ -14,6 +14,10 @@ jobs:
       with:
         ref: 'main'
 
+    - name: Fetch Repository
+      run: |
+        git fetch --all
+
     - name: Get Changed Files and Content
       run: |
         LAST_COMMIT_SHA=${{ github.event.client_payload.last_commit_sha }}
