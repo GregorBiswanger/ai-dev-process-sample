@@ -51,7 +51,7 @@ jobs:
                       nodes {
                         ... on ProjectV2Field {
                           name
-                          ... on ProjectV2FieldSingleSelect {
+                          ... on ProjectV2ItemFieldSingleSelect {
                             options {
                               id
                               name
