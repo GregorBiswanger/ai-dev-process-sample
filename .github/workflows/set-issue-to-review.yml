@@ -50,9 +50,9 @@ jobs:
                 console.log(`Issue #${issue.number}: ${issue.title}`);
               });
 
-              // Replace with your project field ID and option ID for the Review column
-              const fieldId = '1';
-              const optionId = '9fbcdcc0';
+              // Verwenden Sie die IDs aus den bereitgestellten Daten
+              const fieldId = '9fbcdcc0'; // ID des Statusfeldes
+              const optionId = '9fbcdcc0'; // ID der "Review" Spalte oder des Status
 
               for (const issue of linkedIssues) {
                 // GraphQL mutation to move the issue to the Review column
