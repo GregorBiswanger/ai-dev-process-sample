@@ -86,12 +86,18 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
+          const pr = await github.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: ${{ github.event.pull_request.number }}
+          });
+          const lastCommitSha = pr.data.head.sha;
           github.repos.createDispatchEvent({
             owner: context.repo.owner,
             repo: context.repo.repo,
             event_type: 'pull_request_merged',
             client_payload: {
-              pr_number: ${{ github.event.pull_request.number }}
+              pr_number: ${{ github.event.pull_request.number }},
+              last_commit_sha: lastCommitSha
             }
           });
-    
