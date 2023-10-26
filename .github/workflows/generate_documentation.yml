@@ -14,21 +14,20 @@ jobs:
       with:
         ref: 'main'
 
-    - name: Ermittle geänderte Dateien
+    - name: Ermittle Inhalte des Repository
       run: |
-        LAST_COMMIT_SHA=${{ github.event.client_payload.last_commit_sha }}
-        echo "LAST_COMMIT_SHA: $LAST_COMMIT_SHA"
+        PR_NUMBER=${{ github.event.client_payload.pr_number }}
+        echo "PR_NUMBER: $PR_NUMBER"
         
         git fetch origin main
-        git fetch origin pull/${{ github.event.client_payload.pr_number }}/head:pr-${{ github.event.client_payload.pr_number }}
-        
-        CHANGED_FILES=$(git diff --name-only $LAST_COMMIT_SHA origin/main)
+        git fetch origin pull/$PR_NUMBER/head:pr-$PR_NUMBER
+        git checkout pr-$PR_NUMBER
+
         CHANGED_CONTENT=""
-        for file in $CHANGED_FILES; do
-          if [ -f "$file" ]; then
-            CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n")
-            CHANGED_CONTENT+=$(cat $file)
-          fi
+        FILES=$(find . -type f -not -path "./.github/*")
+        for file in $FILES; do
+          CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n")
+          CHANGED_CONTENT+=$(cat $file)
         done
         ESCAPED_CONTENT=$(printf '%s' "$CHANGED_CONTENT" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
