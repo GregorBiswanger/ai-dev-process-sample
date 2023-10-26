@@ -11,12 +11,15 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        ref: 'main'
 
     - name: Send code to OpenAI for documentation
       run: |
         git fetch origin
         CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
         ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
+        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
         
         DOC_RESPONSE=$(jq -n \
                             --arg content "$ESCAPED_CONTENT" \
