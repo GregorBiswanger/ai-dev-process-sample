@@ -15,7 +15,7 @@ jobs:
           // Funktion, um das Issue zu finden und zu verschieben
           async function moveIssueToReview() {
             // Überprüfen, ob der Pull Request ein verlinktes Issue hat
-            const linkedIssues = github.context.payload.pull_request.body.match(/#[0-9]+/g);
+            const linkedIssues = context.payload.pull_request.body.match(/#[0-9]+/g);
             if (!linkedIssues) {
               console.log("Kein verlinktes Issue gefunden.");
               return;
@@ -33,7 +33,7 @@ jobs:
               const cards = await github.rest.projects.listCards({
                 column_id: columnId
               });
-              const card = cards.data.find(card => card.content_url.endsWith(`/issues/${issueId}`));
+              const card = cards.data.find(card => card.content_url && card.content_url.endsWith(`/issues/${issueId}`));
               
               if (card) {
                 // Verschieben des Issues in die Review-Spalte
