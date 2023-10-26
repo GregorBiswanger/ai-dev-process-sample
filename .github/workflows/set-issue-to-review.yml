@@ -78,6 +78,10 @@ jobs:
                   optionId: optionId
                 };
 
-                await github.graphql(mutation, mutationVariables);
+                try {
+                  await github.graphql(mutation, mutationVariables);
+                } catch (error) {
+                  console.error(`Fehler beim Verschieben des Issues #${issue.number}:`, error);
+                }
               }
             }
