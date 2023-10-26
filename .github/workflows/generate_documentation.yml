@@ -13,7 +13,6 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Send code to OpenAI for documentation
-      id: openai_doc
       run: |
         git fetch origin
         CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
@@ -46,9 +45,10 @@ jobs:
         
         DOCUMENTATION=$(echo $DOC_RESPONSE | jq -r .choices[0].message.content)
 
-        # Kodieren des Inhalts in Base64
-        DOCUMENTATION_BASE64=$(echo "$DOCUMENTATION" | base64)
-        echo "DOCUMENTATION_BASE64=$DOCUMENTATION_BASE64" >> $GITHUB_ENV
+        # Erstellen eines Ordners für die Dokumentation
+        mkdir documentation
+        # Speichern der Dokumentation als Markdown-Datei
+        echo "$DOCUMENTATION" > documentation/documentation.md
 
     - name: Update Wiki with Documentation
       uses: docker://decathlon/wiki-page-creator-action:latest
@@ -58,4 +58,4 @@ jobs:
         ACTION_NAME: GregorBiswanger
         OWNER: ${{ github.repository_owner }}
         REPO_NAME: ${{ github.repository }}
-        DOCUMENTATION: ${{ env.DOCUMENTATION_BASE64 }}
+        MD_FOLDER: documentation
