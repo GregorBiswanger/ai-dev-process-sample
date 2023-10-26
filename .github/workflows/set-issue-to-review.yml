@@ -51,9 +51,11 @@ jobs:
                       nodes {
                         ... on ProjectV2Field {
                           name
-                          options {
-                            id
-                            name
+                          ... on ProjectV2FieldSingleSelect {
+                            options {
+                              id
+                              name
+                            }
                           }
                         }
                       }
@@ -68,7 +70,7 @@ jobs:
           });
 
           const reviewColumnId = projectData.repository.projectsV2.nodes[0]
-            .fields.nodes.find(field => field.name === 'Status')
+            .fields.nodes.find(field => field.name === 'Status' && field.options)
             .options.find(option => option.name === 'Review').id;
 
           for (const issue of issues) {
