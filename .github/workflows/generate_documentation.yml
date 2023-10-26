@@ -32,12 +32,14 @@ jobs:
         CHANGED_FILES+=$(git diff --name-only $LAST_COMMIT_SHA HEAD)
         CHANGED_CONTENT=""
         for file in $CHANGED_FILES; do
-          CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n")
-          CHANGED_CONTENT+=$(cat $file)
+          if [ -f "$file" ]; then
+            CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n")
+            CHANGED_CONTENT+=$(cat $file)
+          fi
         done
         ESCAPED_CONTENT=$(printf '%s' "$CHANGED_CONTENT" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
-
+  
     - name: Send Content to OpenAI for Documentation
       run: |
         DOC_RESPONSE=$(jq -n \
