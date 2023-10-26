@@ -5,49 +5,40 @@ on:
     types: [assigned]
 
 jobs:
-  move_issue_to_review:
+  move-issue-to-review:
     runs-on: ubuntu-latest
     steps:
-    - name: Move linked issue to Review
-      uses: actions/github-script@v5
-      with:
-        script: |
-          // Funktion, um das Issue zu finden und zu verschieben
-          async function moveIssueToReview() {
-            // Überprüfen, ob der Pull Request ein verlinktes Issue hat
-            const linkedIssues = context.payload.pull_request.body.match(/#[0-9]+/g);
-            if (!linkedIssues) {
-              console.log("Kein verlinktes Issue gefunden.");
-              return;
-            }
-          
-            // Gehe jedes verlinkte Issue durch
-            for (const issueNumber of linkedIssues) {
-              const issueId = issueNumber.replace('#', '');
-              
-              // Hier müssen Sie die ID Ihres GitHub Projects und die Spalten-ID für "Review" anpassen
-              const projectId = '1';
-              const columnId = '9fbcdcc0';
-              
-              // Hole die Karten-ID des Issues
-              const cards = await github.rest.projects.listCards({
-                column_id: columnId
+      - name: Move linked issue to Review column
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const github = require('@actions/github');
+            const context = github.context;
+            const token = process.env.GITHUB_TOKEN;
+            const octokit = github.getOctokit(token);
+
+            const prNumber = context.payload.pull_request.number;
+            const repoName = context.repo.repo;
+            const ownerName = context.repo.owner;
+
+            // Get linked issues from the pull request
+            const { data: linkedIssues } = await octokit.rest.issues.listForRepo({
+              owner: ownerName,
+              repo: repoName,
+              pull_request: prNumber
+            });
+
+            // Replace with your project ID and column ID
+            const projectId = '1';
+            const reviewColumnId = '9fbcdcc0';
+
+            for (const issue of linkedIssues) {
+              // Move the issue to the Review column
+              await octokit.rest.projects.moveCard({
+                card_id: issue.id,
+                column_id: reviewColumnId,
+                position: 'top'
               });
-              const card = cards.data.find(card => card.content_url && card.content_url.endsWith(`/issues/${issueId}`));
-              
-              if (card) {
-                // Verschieben des Issues in die Review-Spalte
-                await github.rest.projects.moveCard({
-                  card_id: card.id,
-                  column_id: columnId,
-                  position: 'top'
-                });
-                console.log(`Issue #${issueId} wurde zu Review verschoben.`);
-              } else {
-                console.log(`Issue #${issueId} nicht in der Spalte gefunden.`);
-              }
             }
-          }
-          
-          // Funktion ausführen
-          moveIssueToReview();
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
