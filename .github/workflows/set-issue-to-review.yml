@@ -41,7 +41,7 @@ jobs:
 
           const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
 
-          // Get the details of the fields
+          // Get basic project details
           const projectData = await github.graphql(`
             query($owner: String!, $repo: String!) {
               repository(owner: $owner, name: $repo) {
@@ -51,23 +51,6 @@ jobs:
                       nodes {
                         id
                         name
-                        settings
-                        dataType
-                        ... on ProjectV2SingleSelectField {
-                          options {
-                            id
-                            name
-                          }
-                        }
-                        ... on ProjectV2TextField {
-                          text
-                        }
-                        ... on ProjectV2NumberField {
-                          number
-                        }
-                        ... on ProjectV2DateField {
-                          date
-                        }
                       }
                     }
                   }
@@ -79,5 +62,4 @@ jobs:
             repo
           });
 
-          // Output the details of the fields
           console.log(JSON.stringify(projectData, null, 2));
