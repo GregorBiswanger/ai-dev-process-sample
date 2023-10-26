@@ -16,18 +16,13 @@ jobs:
 
     - name: Ermittle geänderte Dateien
       run: |
+        LAST_COMMIT_SHA=${{ github.event.client_payload.last_commit_sha }}
+        echo "LAST_COMMIT_SHA: $LAST_COMMIT_SHA"
+        
         git fetch origin main
-        LAST_COMMIT_SHA=$(git rev-parse origin/main)
-        SECOND_LAST_COMMIT_SHA=$(git rev-parse origin/main~1)
-        THIRD_LAST_COMMIT_SHA=$(git rev-parse origin/main~2)
-        echo "LAST_COMMIT_SHA=$LAST_COMMIT_SHA" >> $GITHUB_ENV
-        echo "SECOND_LAST_COMMIT_SHA=$SECOND_LAST_COMMIT_SHA" >> $GITHUB_ENV
-        echo "THIRD_LAST_COMMIT_SHA=$THIRD_LAST_COMMIT_SHA" >> $GITHUB_ENV
-
-        CHANGED_FILES=""
-        CHANGED_FILES+=$(git diff --name-only $THIRD_LAST_COMMIT_SHA $SECOND_LAST_COMMIT_SHA)
-        CHANGED_FILES+=$(git diff --name-only $SECOND_LAST_COMMIT_SHA $LAST_COMMIT_SHA)
-        CHANGED_FILES+=$(git diff --name-only $LAST_COMMIT_SHA HEAD)
+        git fetch origin pull/${{ github.event.client_payload.pr_number }}/head:pr-${{ github.event.client_payload.pr_number }}
+        
+        CHANGED_FILES=$(git diff --name-only $LAST_COMMIT_SHA origin/main)
         CHANGED_CONTENT=""
         for file in $CHANGED_FILES; do
           if [ -f "$file" ]; then
