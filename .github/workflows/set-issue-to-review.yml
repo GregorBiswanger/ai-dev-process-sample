@@ -15,7 +15,7 @@ jobs:
             const github = require('@actions/github');
             const context = github.context;
             const token = process.env.GITHUB_TOKEN;
-            const octokit = github.getOctokit(token);
+            const octokit = new github.GitHub(token);
 
             const prNumber = context.payload.pull_request.number;
             const repoName = context.repo.repo;
