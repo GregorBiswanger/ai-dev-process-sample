@@ -51,9 +51,12 @@ jobs:
                       nodes {
                         fieldValues(first: 1) {
                           nodes {
-                            projectField {
+                            ... on ProjectV2ItemFieldSingleSelectValue {
                               name
-                              settings
+                              projectField {
+                                name
+                                settings
+                              }
                             }
                           }
                         }
