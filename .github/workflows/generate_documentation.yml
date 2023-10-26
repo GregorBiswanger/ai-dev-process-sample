@@ -14,12 +14,16 @@ jobs:
       with:
         ref: 'main'
 
+    - name: Diagnose Information
+      run: |
+        echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+        echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
+        echo "Event Payload: ${{ toJSON(github.event) }}"
+
     - name: Send code to OpenAI for documentation
       run: |
         git fetch origin
-        # Ermitteln des letzten Commits vor dem Merge
-        LAST_COMMIT_BEFORE_MERGE=$(git rev-list --parents -n 1 HEAD | awk '{print $2}')
-        CODE_DIFF=$(git diff $LAST_COMMIT_BEFORE_MERGE HEAD --unified=0)
+        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
         ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
         
