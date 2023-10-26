@@ -34,6 +34,8 @@ jobs:
 
     - name: Erstelle Dokumentation mit OpenAI
       run: |
+        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
+        
         DOC_RESPONSE=$(jq -n \
                             --arg content "$ESCAPED_CONTENT" \
                             '{
