@@ -14,7 +14,7 @@ jobs:
       with:
         ref: 'main'
 
-    - name: Ermittle Inhalte des Repository
+    - name: Ermittle Inhalte und erstelle Dokumentation mit OpenAI
       run: |
         PR_NUMBER=${{ github.event.client_payload.pr_number }}
         echo "PR_NUMBER: $PR_NUMBER"
@@ -26,16 +26,12 @@ jobs:
         CHANGED_CONTENT=""
         FILES=$(find . -type f -not -path "./.github/*" -not -path "./.git/*")
         for file in $FILES; do
-          CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n")
+          CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n ")
           CHANGED_CONTENT+=$(cat $file)
         done
         ESCAPED_CONTENT=$(printf '%s' "$CHANGED_CONTENT" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
 
-    - name: Erstelle Dokumentation mit OpenAI
-      run: |
-        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
-        
         DOC_RESPONSE=$(jq -n \
                             --arg content "$ESCAPED_CONTENT" \
                             '{
