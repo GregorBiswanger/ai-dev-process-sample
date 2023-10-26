@@ -14,17 +14,18 @@ jobs:
       with:
         ref: 'main'
 
-    - name: Get Last Merge Commit
-      id: last_merge_commit
+    - name: Get Last Merge Commit or First Commit
       run: |
         LAST_MERGE_COMMIT=$(git log --merges -n 1 --pretty=format:"%H")
-        echo "LAST_MERGE_COMMIT: $LAST_MERGE_COMMIT"
-        echo "::set-output name=last_merge_commit::$LAST_MERGE_COMMIT"
+        if [ -z "$LAST_MERGE_COMMIT" ]; then
+          LAST_MERGE_COMMIT=$(git rev-list --max-parents=0 HEAD)
+        fi
+        echo "LAST_MERGE_COMMIT=$LAST_MERGE_COMMIT" >> $GITHUB_ENV
 
     - name: Get Changed Files and Content
       run: |
         git fetch origin
-        CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ steps.last_merge_commit.outputs.last_merge_commit }} HEAD)
+        CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r $LAST_MERGE_COMMIT HEAD)
         CHANGED_CONTENT=""
         for file in $CHANGED_FILES; do
           CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n")
