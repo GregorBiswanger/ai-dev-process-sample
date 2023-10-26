@@ -66,7 +66,6 @@ jobs:
                         ... on ProjectV2DateField {
                           date
                         }
-                        // Fügen Sie hier weitere Fragmente für andere Typen hinzu
                       }
                     }
                   }
