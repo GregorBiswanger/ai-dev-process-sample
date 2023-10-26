@@ -8,7 +8,7 @@ jobs:
   move-issue-to-review:
     runs-on: ubuntu-latest
     steps:
-      - name: Move linked issue to Review column
+      - name: Move linked issue to Review
         uses: actions/github-script@v5
         with:
           script: |
@@ -16,72 +16,26 @@ jobs:
             const repoName = context.repo.repo;
             const ownerName = context.repo.owner;
 
-            // GraphQL query to get linked issues from the pull request
-            const query = `
-              query($owner: String!, $repo: String!, $prNumber: Int!) {
-                repository(owner: $owner, name: $repo) {
-                  pullRequest(number: $prNumber) {
-                    closingIssuesReferences(first: 10) {
-                      nodes {
-                        id
-                        number
-                        title
-                      }
-                    }
-                  }
-                }
-              }
-            `;
-
-            const variables = {
+            // Get linked issues from the pull request
+            const { data: linkedIssues } = await github.rest.issues.listForRepo({
               owner: ownerName,
               repo: repoName,
-              prNumber: prNumber
-            };
-
-            const response = await github.graphql(query, variables);
-            const linkedIssues = response.repository.pullRequest.closingIssuesReferences.nodes;
+              pull_request: prNumber
+            });
 
             if (linkedIssues.length === 0) {
               console.log("Keine verknüpften Issues gefunden.");
             } else {
               console.log("Gefundene verknüpfte Issues:");
-              linkedIssues.forEach(issue => {
+              linkedIssues.forEach(async issue => {
                 console.log(`Issue #${issue.number}: ${issue.title}`);
+
+                // Add 'review' label to the issue
+                await github.rest.issues.addLabels({
+                  owner: ownerName,
+                  repo: repoName,
+                  issue_number: issue.number,
+                  labels: ['review'] // Replace 'review' with the label you want to add
+                });
               });
-
-              // Verwenden Sie die IDs aus den bereitgestellten Daten
-              const fieldId = '9fbcdcc0'; // ID des Statusfeldes
-              const optionId = 'Review'; // ID der "Review" Spalte oder des Status
-
-              for (const issue of linkedIssues) {
-                // GraphQL mutation to move the issue to the Review column
-                const mutation = `
-                  mutation($itemId: ID!, $fieldId: ID!, $optionId: ID!) {
-                    updateProjectV2ItemFieldValue(input: {
-                      projectId: $itemId,
-                      fieldId: $fieldId,
-                      value: {
-                        singleSelectOptionId: $optionId
-                      }
-                    }) {
-                      projectV2Item {
-                        id
-                      }
-                    }
-                  }
-                `;
-
-                const mutationVariables = {
-                  itemId: issue.id,
-                  fieldId: fieldId,
-                  optionId: optionId
-                };
-
-                try {
-                  await github.graphql(mutation, mutationVariables);
-                } catch (error) {
-                  console.error(`Fehler beim Verschieben des Issues #${issue.number}:`, error);
-                }
-              }
             }
