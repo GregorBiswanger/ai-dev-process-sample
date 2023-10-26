@@ -57,5 +57,5 @@ jobs:
         ACTION_MAIL: gregor.biswanger@web-enliven.de
         ACTION_NAME: GregorBiswanger
         OWNER: ${{ github.repository_owner }}
-        REPO_NAME: ${{ github.repository }}
+        REPO_NAME: ai-dev-process-sample
         MD_FOLDER: documentation
