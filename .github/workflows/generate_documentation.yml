@@ -45,13 +45,17 @@ jobs:
              -d @-)
         
         DOCUMENTATION=$(echo $DOC_RESPONSE | jq -r .choices[0].message.content)
-        echo "DOCUMENTATION=$DOCUMENTATION" >> $GITHUB_ENV
+
+        # Kodieren des Inhalts in Base64
+        DOCUMENTATION_BASE64=$(echo "$DOCUMENTATION" | base64)
+        echo "DOCUMENTATION_BASE64=$DOCUMENTATION_BASE64" >> $GITHUB_ENV
 
     - name: Update Wiki with Documentation
       uses: docker://decathlon/wiki-page-creator-action:latest
       env:
-        GH_PAT: ${{ secrets.GHPROJECT_TOKEN }}
+        GH_PAT: ${{ secrets.GITHUB_TOKEN }}
         ACTION_MAIL: gregor.biswanger@web-enliven.de
         ACTION_NAME: GregorBiswanger
         OWNER: ${{ github.repository_owner }}
         REPO_NAME: ${{ github.repository }}
+        DOCUMENTATION: ${{ env.DOCUMENTATION_BASE64 }}
