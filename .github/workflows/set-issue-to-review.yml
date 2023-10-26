@@ -16,22 +16,57 @@ jobs:
             const repoName = context.repo.repo;
             const ownerName = context.repo.owner;
 
-            // Get linked issues from the pull request
-            const { data: linkedIssues } = await github.rest.issues.listForRepo({
+            // GraphQL query to get linked issues (items) from the pull request
+            const query = `
+              query($owner: String!, $repo: String!, $prNumber: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $prNumber) {
+                    projectItems(first: 10) {
+                      nodes {
+                        id
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const variables = {
               owner: ownerName,
               repo: repoName,
-              pull_request: prNumber
-            });
+              prNumber: prNumber
+            };
 
-            // Replace with your project ID and column ID
-            const projectId = '1';
-            const reviewColumnId = '9fbcdcc0';
+            const response = await github.graphql(query, variables);
+            const linkedItems = response.repository.pullRequest.projectItems.nodes;
 
-            for (const issue of linkedIssues) {
-              // Move the issue to the Review column
-              await github.rest.projects.moveCard({
-                card_id: issue.id,
-                column_id: reviewColumnId,
-                position: 'top'
-              });
+            // Replace with your project field ID and option ID for the Review column
+            const fieldId = '1';
+            const optionId = '9fbcdcc0';
+
+            for (const item of linkedItems) {
+              // GraphQL mutation to move the item to the Review column
+              const mutation = `
+                mutation($itemId: ID!, $fieldId: ID!, $optionId: ID!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $itemId,
+                    fieldId: $fieldId,
+                    value: {
+                      singleSelectOptionId: $optionId
+                    }
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }
+              `;
+
+              const mutationVariables = {
+                itemId: item.id,
+                fieldId: fieldId,
+                optionId: optionId
+              };
+
+              await github.graphql(mutation, mutationVariables);
             }
