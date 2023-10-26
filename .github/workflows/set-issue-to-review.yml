@@ -51,8 +51,8 @@ jobs:
               });
 
               // Verwenden Sie die IDs aus den bereitgestellten Daten
-              const fieldId = 'Assignees'; // ID des Statusfeldes
-              const optionId = '9fbcdcc0'; // ID der "Review" Spalte oder des Status
+              const fieldId = '9fbcdcc0'; // ID des Statusfeldes
+              const optionId = 'Review'; // ID der "Review" Spalte oder des Status
 
               for (const issue of linkedIssues) {
                 // GraphQL mutation to move the issue to the Review column
