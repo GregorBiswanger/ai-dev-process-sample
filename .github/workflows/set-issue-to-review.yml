@@ -1,0 +1,59 @@
+name: Set Linked Issue to Review
+
+on:
+  pull_request:
+    types: [assigned]
+
+jobs:
+  set-issue-to-review:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set linked issue to Review
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const prNumber = ${{ github.event.pull_request.number }};
+          const repo = context.repo.repo;
+          const owner = context.repo.owner;
+
+          // Get linked issues from the PR
+          const linkedIssues = await github.graphql(`
+            query($owner: String!, $repo: String!, $prNumber: Int!) {
+              repository(owner: $owner, name: $repo) {
+                pullRequest(number: $prNumber) {
+                  closingIssuesReferences(first: 10) {
+                    nodes {
+                      number
+                    }
+                  }
+                }
+              }
+            }
+          `, {
+            owner,
+            repo,
+            prNumber
+          });
+
+          const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
+
+          for (const issue of issues) {
+            const mutation = `
+              mutation($issueId: ID!, $columnId: ID!) {
+                addProjectV2ItemById(input: {projectId: $columnId, contentId: $issueId}) {
+                  item {
+                    id
+                  }
+                }
+              }
+            `;
+
+            await github.graphql(mutation, {
+              issueId: `Issue-${issue.number}`,
+              columnId: '9fbcdcc0'
+            });
+          }
