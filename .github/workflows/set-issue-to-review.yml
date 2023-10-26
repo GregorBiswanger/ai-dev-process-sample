@@ -1,80 +1,46 @@
-name: Set Linked Issue to Review
+name: Move Issue to Review
 
 on:
   pull_request:
     types: [assigned]
 
 jobs:
-  set-issue-to-review:
+  move_issue_to_review:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Set linked issue to Review
-      uses: actions/github-script@v3
+    - name: Move linked issue to Review
+      uses: actions/github-script@v5
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const prNumber = ${{ github.event.pull_request.number }};
-          const repo = context.repo.repo;
-          const owner = context.repo.owner;
-
-          // Get linked issues from the PR
-          const linkedIssues = await github.graphql(`
-            query($owner: String!, $repo: String!, $prNumber: Int!) {
-              repository(owner: $owner, name: $repo) {
-                pullRequest(number: $prNumber) {
-                  closingIssuesReferences(first: 10) {
-                    nodes {
-                      number
-                    }
-                  }
-                }
-              }
+          const github = require('@actions/github');
+          const context = github.context;
+          
+          // Funktion, um das Issue zu finden und zu verschieben
+          async function moveIssueToReview() {
+            // Überprüfen, ob der Pull Request ein verlinktes Issue hat
+            const linkedIssues = context.payload.pull_request.body.match(/#[0-9]+/g);
+            if (!linkedIssues) {
+              console.log("Kein verlinktes Issue gefunden.");
+              return;
             }
-          `, {
-            owner,
-            repo,
-            prNumber
-          });
 
-          const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
+            // Gehe jedes verlinkte Issue durch
+            for (const issueNumber of linkedIssues) {
+              const issueId = issueNumber.replace('#', '');
+              
+              // Hier müssen Sie die ID Ihres GitHub Projects und die Spalten-ID für "Review" anpassen
+              const projectId = '1';
+              const columnId = '9fbcdcc0';
 
-          // Get project fields using inline fragments
-          const projectData = await github.graphql(`
-            query($owner: String!, $repo: String!) {
-              repository(owner: $owner, name: $repo) {
-                projectsV2(first: 1) {
-                  nodes {
-                    fields(first: 10) {
-                      nodes {
-                        id
-                        name
-                        ... on ProjectV2SingleSelectField {
-                          options {
-                            id
-                            name
-                          }
-                        }
-                        ... on ProjectV2TextField {
-                          text
-                        }
-                        ... on ProjectV2NumberField {
-                          number
-                        }
-                        ... on ProjectV2DateField {
-                          date
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              // Verschieben des Issues in die Review-Spalte
+              await github.rest.projects.moveCard({
+                card_id: issueId,
+                column_id: columnId,
+                position: 'top'
+              });
+              console.log(`Issue #${issueId} wurde zu Review verschoben.`);
             }
-          `, {
-            owner,
-            repo
-          });
+          }
 
-          console.log(JSON.stringify(projectData, null, 2));
+          // Funktion ausführen
+          moveIssueToReview();
