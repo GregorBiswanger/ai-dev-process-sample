@@ -49,35 +49,35 @@ jobs:
               linkedIssues.forEach(issue => {
                 console.log(`Issue #${issue.number}: ${issue.title}`);
               });
-            }
 
-            // Replace with your project field ID and option ID for the Review column
-            const fieldId = 'board';
-            const optionId = '9fbcdcc0';
+              // Replace with your project field ID and option ID for the Review column
+              const fieldId = 'board';
+              const optionId = '9fbcdcc0';
 
-            for (const item of linkedItems) {
-              // GraphQL mutation to move the item to the Review column
-              const mutation = `
-                mutation($itemId: ID!, $fieldId: ID!, $optionId: ID!) {
-                  updateProjectV2ItemFieldValue(input: {
-                    projectId: $itemId,
-                    fieldId: $fieldId,
-                    value: {
-                      singleSelectOptionId: $optionId
-                    }
-                  }) {
-                    projectV2Item {
-                      id
+              for (const issue of linkedIssues) {
+                // GraphQL mutation to move the issue to the Review column
+                const mutation = `
+                  mutation($itemId: ID!, $fieldId: ID!, $optionId: ID!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $itemId,
+                      fieldId: $fieldId,
+                      value: {
+                        singleSelectOptionId: $optionId
+                      }
+                    }) {
+                      projectV2Item {
+                        id
+                      }
                     }
                   }
-                }
-              `;
+                `;
 
-              const mutationVariables = {
-                itemId: item.id,
-                fieldId: fieldId,
-                optionId: optionId
-              };
+                const mutationVariables = {
+                  itemId: issue.id,
+                  fieldId: fieldId,
+                  optionId: optionId
+                };
 
-              await github.graphql(mutation, mutationVariables);
+                await github.graphql(mutation, mutationVariables);
+              }
             }
