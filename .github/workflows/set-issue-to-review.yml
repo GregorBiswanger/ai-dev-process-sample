@@ -53,6 +53,12 @@ jobs:
                         name
                         settings
                         dataType
+                        ... on ProjectV2SingleSelectField {
+                          options {
+                            id
+                            name
+                          }
+                        }
                       }
                     }
                   }
