@@ -11,12 +11,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-      with:
-        ref: 'main'
-
-    - name: Fetch Repository
-      run: |
-        git fetch --all
 
     - name: Get Changed Files and Content
       run: |
