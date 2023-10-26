@@ -47,18 +47,12 @@ jobs:
               repository(owner: $owner, name: $repo) {
                 projectsV2(first: 1) {
                   nodes {
-                    items(first: 1) {
+                    fields(first: 10) {
                       nodes {
-                        fieldValues(first: 1) {
-                          nodes {
-                            ... on ProjectV2ItemFieldSingleSelectValue {
-                              name
-                              projectField {
-                                name
-                                settings
-                              }
-                            }
-                          }
+                        name
+                        options {
+                          id
+                          name
                         }
                       }
                     }
@@ -71,9 +65,10 @@ jobs:
             repo
           });
 
-          const reviewColumnId = projectData.repository.projectsV2.nodes.find(project => project.name === 'ToDo App Sample')
-            .items.nodes[0].fieldValues.nodes.find(field => field.projectField.name === 'Status' && field.projectField.settings.includes('Review'))
-            .id;
+          // Replace 'Your Project Name' with the actual name of your project
+          const reviewColumnId = projectData.repository.projectsV2.nodes[0]
+            .fields.nodes.find(field => field.name === 'Status')
+            .options.find(option => option.name === 'Review').id;
 
           for (const issue of issues) {
             // Move the issue to the "Review" column
