@@ -24,6 +24,7 @@ jobs:
       run: |
         git fetch origin
         CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
+        echo "CODE_DIFF: $CODE_DIFF"
         ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
         
