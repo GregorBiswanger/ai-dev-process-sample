@@ -12,12 +12,10 @@ jobs:
       uses: actions/github-script@v5
       with:
         script: |
-          const context = github.context;
-          
           // Funktion, um das Issue zu finden und zu verschieben
           async function moveIssueToReview() {
             // Überprüfen, ob der Pull Request ein verlinktes Issue hat
-            const linkedIssues = context.payload.pull_request.body.match(/#[0-9]+/g);
+            const linkedIssues = github.context.payload.pull_request.body.match(/#[0-9]+/g);
             if (!linkedIssues) {
               console.log("Kein verlinktes Issue gefunden.");
               return;
@@ -30,14 +28,24 @@ jobs:
               // Hier müssen Sie die ID Ihres GitHub Projects und die Spalten-ID für "Review" anpassen
               const projectId = '1';
               const columnId = '9fbcdcc0';
-          
-              // Verschieben des Issues in die Review-Spalte
-              await github.rest.projects.moveCard({
-                card_id: issueId,
-                column_id: columnId,
-                position: 'top'
+              
+              // Hole die Karten-ID des Issues
+              const cards = await github.rest.projects.listCards({
+                column_id: columnId
               });
-              console.log(`Issue #${issueId} wurde zu Review verschoben.`);
+              const card = cards.data.find(card => card.content_url.endsWith(`/issues/${issueId}`));
+              
+              if (card) {
+                // Verschieben des Issues in die Review-Spalte
+                await github.rest.projects.moveCard({
+                  card_id: card.id,
+                  column_id: columnId,
+                  position: 'top'
+                });
+                console.log(`Issue #${issueId} wurde zu Review verschoben.`);
+              } else {
+                console.log(`Issue #${issueId} nicht in der Spalte gefunden.`);
+              }
             }
           }
           
