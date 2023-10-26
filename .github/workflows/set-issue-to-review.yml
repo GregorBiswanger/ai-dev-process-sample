@@ -59,6 +59,15 @@ jobs:
                             name
                           }
                         }
+                        ... on ProjectV2TextField {
+                          text
+                        }
+                        ... on ProjectV2NumberField {
+                          number
+                        }
+                        ... on ProjectV2DateField {
+                          date
+                        }
                       }
                     }
                   }
