@@ -41,7 +41,7 @@ jobs:
 
           const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
 
-          // Get basic project details
+          // Get project fields using inline fragments
           const projectData = await github.graphql(`
             query($owner: String!, $repo: String!) {
               repository(owner: $owner, name: $repo) {
@@ -51,6 +51,22 @@ jobs:
                       nodes {
                         id
                         name
+                        ... on ProjectV2SingleSelectField {
+                          options {
+                            id
+                            name
+                          }
+                        }
+                        ... on ProjectV2TextField {
+                          text
+                        }
+                        ... on ProjectV2NumberField {
+                          number
+                        }
+                        ... on ProjectV2DateField {
+                          date
+                        }
+                        // Fügen Sie hier weitere Fragmente für andere Typen hinzu
                       }
                     }
                   }
