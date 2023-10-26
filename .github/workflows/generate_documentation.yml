@@ -17,7 +17,9 @@ jobs:
     - name: Send code to OpenAI for documentation
       run: |
         git fetch origin
-        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
+        # Ermitteln des letzten Commits vor dem Merge
+        LAST_COMMIT_BEFORE_MERGE=$(git rev-list --parents -n 1 HEAD | awk '{print $2}')
+        CODE_DIFF=$(git diff $LAST_COMMIT_BEFORE_MERGE HEAD --unified=0)
         ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
         
