@@ -12,17 +12,12 @@ jobs:
         uses: actions/github-script@v5
         with:
           script: |
-            const github = require('@actions/github');
-            const context = github.context;
-            const token = process.env.GITHUB_TOKEN;
-            const octokit = new github.GitHub(token);
-
             const prNumber = context.payload.pull_request.number;
             const repoName = context.repo.repo;
             const ownerName = context.repo.owner;
 
             // Get linked issues from the pull request
-            const { data: linkedIssues } = await octokit.rest.issues.listForRepo({
+            const { data: linkedIssues } = await github.rest.issues.listForRepo({
               owner: ownerName,
               repo: repoName,
               pull_request: prNumber
@@ -34,7 +29,7 @@ jobs:
 
             for (const issue of linkedIssues) {
               // Move the issue to the Review column
-              await octokit.rest.projects.moveCard({
+              await github.rest.projects.moveCard({
                 card_id: issue.id,
                 column_id: reviewColumnId,
                 position: 'top'
