@@ -41,7 +41,39 @@ jobs:
 
           const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
 
+          // Get the ID of the "Review" column
+          const projectData = await github.graphql(`
+            query($owner: String!, $repo: String!) {
+              repository(owner: $owner, name: $repo) {
+                projectsV2(first: 1) {
+                  nodes {
+                    items(first: 1) {
+                      nodes {
+                        fieldValues(first: 1) {
+                          nodes {
+                            projectField {
+                              name
+                              settings
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          `, {
+            owner,
+            repo
+          });
+
+          const reviewColumnId = projectData.repository.projectsV2.nodes.find(project => project.name === 'ToDo App Sample')
+            .items.nodes[0].fieldValues.nodes.find(field => field.projectField.name === 'Status' && field.projectField.settings.includes('Review'))
+            .id;
+
           for (const issue of issues) {
+            // Move the issue to the "Review" column
             const mutation = `
               mutation($issueId: ID!, $columnId: ID!) {
                 addProjectV2ItemById(input: {projectId: $columnId, contentId: $issueId}) {
@@ -54,6 +86,6 @@ jobs:
 
             await github.graphql(mutation, {
               issueId: `Issue-${issue.number}`,
-              columnId: '9fbcdcc0'
+              columnId: reviewColumnId
             });
           }
