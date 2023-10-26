@@ -14,18 +14,23 @@ jobs:
       with:
         ref: 'main'
 
-    - name: Diagnose Information
+    - name: Get Last Merge Commit
+      id: last_merge_commit
       run: |
-        echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
-        echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
-        echo "Event Payload: ${{ toJSON(github.event) }}"
+        LAST_MERGE_COMMIT=$(git log --merges -n 1 --pretty=format:"%H")
+        echo "LAST_MERGE_COMMIT: $LAST_MERGE_COMMIT"
+        echo "::set-output name=last_merge_commit::$LAST_MERGE_COMMIT"
 
-    - name: Send code to OpenAI for documentation
+    - name: Get Changed Files and Content
       run: |
         git fetch origin
-        CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
-        echo "CODE_DIFF: $CODE_DIFF"
-        ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
+        CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ steps.last_merge_commit.outputs.last_merge_commit }} HEAD)
+        CHANGED_CONTENT=""
+        for file in $CHANGED_FILES; do
+          CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n")
+          CHANGED_CONTENT+=$(cat $file)
+        done
+        ESCAPED_CONTENT=$(printf '%s' "$CHANGED_CONTENT" | jq -Rs .)
         echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
         
         DOC_RESPONSE=$(jq -n \
