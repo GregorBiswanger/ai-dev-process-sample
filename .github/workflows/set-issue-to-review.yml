@@ -12,7 +12,6 @@ jobs:
       uses: actions/github-script@v5
       with:
         script: |
-          const github = require('@actions/github');
           const context = github.context;
           
           // Funktion, um das Issue zu finden und zu verschieben
@@ -23,7 +22,7 @@ jobs:
               console.log("Kein verlinktes Issue gefunden.");
               return;
             }
-
+          
             // Gehe jedes verlinkte Issue durch
             for (const issueNumber of linkedIssues) {
               const issueId = issueNumber.replace('#', '');
@@ -31,7 +30,7 @@ jobs:
               // Hier müssen Sie die ID Ihres GitHub Projects und die Spalten-ID für "Review" anpassen
               const projectId = '1';
               const columnId = '9fbcdcc0';
-
+          
               // Verschieben des Issues in die Review-Spalte
               await github.rest.projects.moveCard({
                 card_id: issueId,
@@ -41,6 +40,6 @@ jobs:
               console.log(`Issue #${issueId} wurde zu Review verschoben.`);
             }
           }
-
+          
           // Funktion ausführen
           moveIssueToReview();
