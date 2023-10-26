@@ -53,7 +53,7 @@ jobs:
     - name: Update Wiki with Documentation
       uses: docker://decathlon/wiki-page-creator-action:latest
       env:
-        GH_PAT: ${{ secrets.GITHUB_TOKEN }}
+        GH_PAT: ${{ secrets.GHPROJECT_TOKEN }}
         ACTION_MAIL: gregor.biswanger@web-enliven.de
         ACTION_NAME: GregorBiswanger
         OWNER: ${{ github.repository_owner }}
