@@ -49,7 +49,7 @@ jobs:
       
               // Verschieben des Issues in die Review-Spalte
               await github.graphql(`
-                mutation updateIssueField($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: ID!) {
+                mutation updateIssueField($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
                   updateProjectV2ItemFieldValue(input: {
                     projectId: $projectId,
                     itemId: $itemId,
