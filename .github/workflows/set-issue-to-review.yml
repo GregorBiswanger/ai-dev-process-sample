@@ -1,41 +1,71 @@
-name: Move Issue to Review
+name: Move Linked Issue to Review
 
 on:
   pull_request:
     types: [assigned]
 
 jobs:
-  move-issue-to-review:
+  move-to-review:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Move linked issue to Review
         uses: actions/github-script@v5
         with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const prNumber = context.payload.pull_request.number;
+            const { payload, graphql } = github;
+            const prNumber = payload.pull_request.number;
             const repoName = context.repo.repo;
             const ownerName = context.repo.owner;
 
-            // Get linked issues from the pull request
-            const { data: linkedIssues } = await github.rest.issues.listForRepo({
+            // Find linked issues
+            const linkedIssues = await graphql(`
+              query linkedIssues($owner: String!, $repo: String!, $prNumber: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $prNumber) {
+                    closingIssuesReferences(first: 10) {
+                      nodes {
+                        number
+                      }
+                    }
+                  }
+                }
+              }
+            `, {
               owner: ownerName,
               repo: repoName,
-              pull_request: prNumber
+              prNumber: prNumber
             });
 
-            if (linkedIssues.length === 0) {
-              console.log("Keine verknüpften Issues gefunden.");
-            } else {
-              console.log("Gefundene verknüpfte Issues:");
-              linkedIssues.forEach(async issue => {
-                console.log(`Issue #${issue.number}: ${issue.title}`);
+            const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
 
-                // Add 'review' label to the issue
-                await github.rest.issues.addLabels({
-                  owner: ownerName,
-                  repo: repoName,
-                  issue_number: issue.number,
-                  labels: ['review'] // Replace 'review' with the label you want to add
-                });
+            for (const issue of issues) {
+              // Hier müssen Sie die PROJECT_ID und FIELD_ID durch Ihre tatsächlichen Werte ersetzen
+              const PROJECT_ID = 'PVT_kwHOAG_xbM4AXPoY';
+              const FIELD_ID = 'PVTSSF_lAHOAG_xbM4AXPoYzgO24V0';
+              const REVIEW_OPTION_ID = '9fbcdcc0';
+
+              // Verschieben des Issues in die Review-Spalte
+              await graphql(`
+                mutation updateIssueField($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: ID!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $projectId,
+                    itemId: $itemId,
+                    fieldId: $fieldId,
+                    value: { singleSelectOptionId: $optionId }
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }
+              `, {
+                projectId: PROJECT_ID,
+                itemId: `PVTI_${issue.number}`,
+                fieldId: FIELD_ID,
+                optionId: REVIEW_OPTION_ID
               });
             }
