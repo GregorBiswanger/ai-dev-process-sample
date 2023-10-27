@@ -50,10 +50,10 @@ jobs:
 
               // Find the project item ID for the issue
               const projectItem = await github.graphql(`
-                query findProjectItem($org: String!, $projectId: ID!, $issueNumber: Int!) {
+                query findProjectItem($org: String!, $projectId: ID!) {
                   organization(login: $org) {
                     projectV2(number: $projectId) {
-                      items(first: 10, query: $issueNumber) {
+                      items(first: 10, search: "issue:${issue.number}") {
                         nodes {
                           id
                         }
@@ -63,8 +63,7 @@ jobs:
                 }
               `, {
                 org: ownerName,
-                projectId: PROJECT_ID,
-                issueNumber: issue.number
+                projectId: PROJECT_ID
               });
 
               const itemId = projectItem.organization.projectV2.items.nodes[0].id;
