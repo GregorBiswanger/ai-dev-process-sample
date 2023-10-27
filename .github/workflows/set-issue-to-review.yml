@@ -19,7 +19,7 @@ jobs:
             const prNumber = context.issue.number;
             const repoName = context.repo.repo;
             const ownerName = context.repo.owner;
-
+      
             // Find linked issues
             const linkedIssues = await github.graphql(`
               query linkedIssues($owner: String!, $repo: String!, $prNumber: Int!) {
@@ -38,15 +38,15 @@ jobs:
               repo: repoName,
               prNumber: prNumber
             });
-
+      
             const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
-
+      
             for (const issue of issues) {
               // Hier müssen Sie die PROJECT_ID und FIELD_ID durch Ihre tatsächlichen Werte ersetzen
               const PROJECT_ID = 'PVT_kwHOAG_xbM4AXPoY';
               const FIELD_ID = 'PVTSSF_lAHOAG_xbM4AXPoYzgO24V0';
               const REVIEW_OPTION_ID = '9fbcdcc0';
-
+      
               // Verschieben des Issues in die Review-Spalte
               await github.graphql(`
                 mutation updateIssueField($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: ID!) {
@@ -68,3 +68,4 @@ jobs:
                 optionId: REVIEW_OPTION_ID
               });
             }
+      
