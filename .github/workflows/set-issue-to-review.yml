@@ -16,13 +16,12 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const { payload, graphql } = github;
-            const prNumber = payload.pull_request.number;
+            const prNumber = context.issue.number;
             const repoName = context.repo.repo;
             const ownerName = context.repo.owner;
 
             // Find linked issues
-            const linkedIssues = await graphql(`
+            const linkedIssues = await github.graphql(`
               query linkedIssues($owner: String!, $repo: String!, $prNumber: Int!) {
                 repository(owner: $owner, name: $repo) {
                   pullRequest(number: $prNumber) {
@@ -49,7 +48,7 @@ jobs:
               const REVIEW_OPTION_ID = '9fbcdcc0';
 
               // Verschieben des Issues in die Review-Spalte
-              await graphql(`
+              await github.graphql(`
                 mutation updateIssueField($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: ID!) {
                   updateProjectV2ItemFieldValue(input: {
                     projectId: $projectId,
