@@ -49,13 +49,18 @@ jobs:
               const REVIEW_OPTION_ID = '9fbcdcc0';
 
               // Find the project item ID for the issue
-              const projectItem = await github.graphql(`
-                query findProjectItem($org: String!, $projectId: ID!, $issueId: ID!) {
+              const projectItems = await github.graphql(`
+                query findProjectItems($org: String!, $projectId: ID!) {
                   organization(login: $org) {
                     projectV2(number: $projectId) {
-                      items(first: 10, ids: [$issueId]) {
+                      items(first: 100) {
                         nodes {
                           id
+                          content {
+                            ... on Issue {
+                              id
+                            }
+                          }
                         }
                       }
                     }
@@ -63,11 +68,15 @@ jobs:
                 }
               `, {
                 org: ownerName,
-                projectId: PROJECT_ID,
-                issueId: issue.id
+                projectId: PROJECT_ID
               });
 
-              const itemId = projectItem.organization.projectV2.items.nodes[0].id;
+              const itemId = projectItems.organization.projectV2.items.nodes.find(item => item.content.id === issue.id)?.id;
+
+              if (!itemId) {
+                console.log(`Issue ${issue.number} not found in project.`);
+                continue;
+              }
 
               // Verschieben des Issues in die Review-Spalte
               await github.graphql(`
