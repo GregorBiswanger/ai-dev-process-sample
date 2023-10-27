@@ -11,91 +11,113 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Move linked issue to Review
+      - name: Test Project ID
         uses: actions/github-script@v5
         with:
           github-token: ${{secrets.PROJECT_TOKEN}}
           script: |
-            const prNumber = context.issue.number;
-            const repoName = context.repo.repo;
-            const ownerName = context.repo.owner;
-
-            // Find linked issues and their global IDs
-            const linkedIssues = await github.graphql(`
-              query linkedIssues($owner: String!, $repo: String!, $prNumber: Int!) {
-                repository(owner: $owner, name: $repo) {
-                  pullRequest(number: $prNumber) {
-                    closingIssuesReferences(first: 10) {
-                      nodes {
-                        number
-                        id
-                      }
-                    }
+            const PROJECT_ID = 'PVT_kwHOAG_xbM4AXPoY'; // Ersetzen Sie XXXXXXXXXXXX durch Ihre tatsächliche Projekt-ID
+      
+            const projectDetails = await github.graphql(`
+              query getProject($projectId: ID!) {
+                node(id: $projectId) {
+                  ... on ProjectV2 {
+                    title
                   }
                 }
               }
             `, {
-              owner: ownerName,
-              repo: repoName,
-              prNumber: prNumber
+              projectId: PROJECT_ID
             });
+      
+            console.log(projectDetails);
+      
 
-            const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
+      # - name: Move linked issue to Review
+      #   uses: actions/github-script@v5
+      #   with:
+      #     github-token: ${{secrets.PROJECT_TOKEN}}
+      #     script: |
+      #       const prNumber = context.issue.number;
+      #       const repoName = context.repo.repo;
+      #       const ownerName = context.repo.owner;
 
-            for (const issue of issues) {
-              // Hier müssen Sie die PROJECT_ID und FIELD_ID durch Ihre tatsächlichen Werte ersetzen
-              const PROJECT_ID = 'PVT_kwHOAG_xbM4AXPoY';
-              const FIELD_ID = 'PVTSSF_lAHOAG_xbM4AXPoYzgO24V0';
-              const REVIEW_OPTION_ID = '9fbcdcc0';
+      #       // Find linked issues and their global IDs
+      #       const linkedIssues = await github.graphql(`
+      #         query linkedIssues($owner: String!, $repo: String!, $prNumber: Int!) {
+      #           repository(owner: $owner, name: $repo) {
+      #             pullRequest(number: $prNumber) {
+      #               closingIssuesReferences(first: 10) {
+      #                 nodes {
+      #                   number
+      #                   id
+      #                 }
+      #               }
+      #             }
+      #           }
+      #         }
+      #       `, {
+      #         owner: ownerName,
+      #         repo: repoName,
+      #         prNumber: prNumber
+      #       });
 
-              // Find the project item ID for the issue
-              const projectItems = await github.graphql(`
-                query findProjectItems($org: String!, $projectId: ID!) {
-                  organization(login: $org) {
-                    projectV2(number: $projectId) {
-                      items(first: 100) {
-                        nodes {
-                          id
-                          content {
-                            ... on Issue {
-                              id
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              `, {
-                org: ownerName,
-                projectId: PROJECT_ID
-              });
+      #       const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
 
-              const itemId = projectItems.organization.projectV2.items.nodes.find(item => item.content.id === issue.id)?.id;
+      #       for (const issue of issues) {
+      #         // Hier müssen Sie die PROJECT_ID und FIELD_ID durch Ihre tatsächlichen Werte ersetzen
+      #         const PROJECT_ID = 'PVT_kwHOAG_xbM4AXPoY';
+      #         const FIELD_ID = 'PVTSSF_lAHOAG_xbM4AXPoYzgO24V0';
+      #         const REVIEW_OPTION_ID = '9fbcdcc0';
 
-              if (!itemId) {
-                console.log(`Issue ${issue.number} not found in project.`);
-                continue;
-              }
+      #         // Find the project item ID for the issue
+      #         const projectItems = await github.graphql(`
+      #           query findProjectItems($org: String!, $projectId: ID!) {
+      #             organization(login: $org) {
+      #               projectV2(number: $projectId) {
+      #                 items(first: 100) {
+      #                   nodes {
+      #                     id
+      #                     content {
+      #                       ... on Issue {
+      #                         id
+      #                       }
+      #                     }
+      #                   }
+      #                 }
+      #               }
+      #             }
+      #           }
+      #         `, {
+      #           org: ownerName,
+      #           projectId: PROJECT_ID
+      #         });
 
-              // Verschieben des Issues in die Review-Spalte
-              await github.graphql(`
-                mutation updateIssueField($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
-                  updateProjectV2ItemFieldValue(input: {
-                    projectId: $projectId,
-                    itemId: $itemId,
-                    fieldId: $fieldId,
-                    value: { singleSelectOptionId: $optionId }
-                  }) {
-                    projectV2Item {
-                      id
-                    }
-                  }
-                }
-              `, {
-                projectId: PROJECT_ID,
-                itemId: itemId,
-                fieldId: FIELD_ID,
-                optionId: REVIEW_OPTION_ID
-              });
-            }
+      #         const itemId = projectItems.organization.projectV2.items.nodes.find(item => item.content.id === issue.id)?.id;
+
+      #         if (!itemId) {
+      #           console.log(`Issue ${issue.number} not found in project.`);
+      #           continue;
+      #         }
+
+      #         // Verschieben des Issues in die Review-Spalte
+      #         await github.graphql(`
+      #           mutation updateIssueField($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+      #             updateProjectV2ItemFieldValue(input: {
+      #               projectId: $projectId,
+      #               itemId: $itemId,
+      #               fieldId: $fieldId,
+      #               value: { singleSelectOptionId: $optionId }
+      #             }) {
+      #               projectV2Item {
+      #                 id
+      #               }
+      #             }
+      #           }
+      #         `, {
+      #           projectId: PROJECT_ID,
+      #           itemId: itemId,
+      #           fieldId: FIELD_ID,
+      #           optionId: REVIEW_OPTION_ID
+      #         });
+      #       }
