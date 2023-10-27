@@ -19,7 +19,7 @@ jobs:
             const prNumber = context.issue.number;
             const repoName = context.repo.repo;
             const ownerName = context.repo.owner;
-      
+
             // Find linked issues and their global IDs
             const linkedIssues = await github.graphql(`
               query linkedIssues($owner: String!, $repo: String!, $prNumber: Int!) {
@@ -39,15 +39,36 @@ jobs:
               repo: repoName,
               prNumber: prNumber
             });
-      
+
             const issues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes;
-      
+
             for (const issue of issues) {
               // Hier müssen Sie die PROJECT_ID und FIELD_ID durch Ihre tatsächlichen Werte ersetzen
               const PROJECT_ID = 'PVT_kwHOAG_xbM4AXPoY';
               const FIELD_ID = 'PVTSSF_lAHOAG_xbM4AXPoYzgO24V0';
               const REVIEW_OPTION_ID = '9fbcdcc0';
-      
+
+              // Find the project item ID for the issue
+              const projectItem = await github.graphql(`
+                query findProjectItem($org: String!, $projectId: ID!, $issueNumber: Int!) {
+                  organization(login: $org) {
+                    projectV2(number: $projectId) {
+                      items(first: 10, query: $issueNumber) {
+                        nodes {
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              `, {
+                org: ownerName,
+                projectId: PROJECT_ID,
+                issueNumber: issue.number
+              });
+
+              const itemId = projectItem.organization.projectV2.items.nodes[0].id;
+
               // Verschieben des Issues in die Review-Spalte
               await github.graphql(`
                 mutation updateIssueField($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
@@ -64,10 +85,8 @@ jobs:
                 }
               `, {
                 projectId: PROJECT_ID,
-                itemId: issue.id,
+                itemId: itemId,
                 fieldId: FIELD_ID,
                 optionId: REVIEW_OPTION_ID
               });
             }
-      
-      
