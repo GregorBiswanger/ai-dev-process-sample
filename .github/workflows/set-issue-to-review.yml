@@ -20,7 +20,7 @@ jobs:
             const repoName = context.repo.repo;
             const ownerName = context.repo.owner;
       
-            // Find linked issues
+            // Find linked issues and their global IDs
             const linkedIssues = await github.graphql(`
               query linkedIssues($owner: String!, $repo: String!, $prNumber: Int!) {
                 repository(owner: $owner, name: $repo) {
@@ -28,6 +28,7 @@ jobs:
                     closingIssuesReferences(first: 10) {
                       nodes {
                         number
+                        id
                       }
                     }
                   }
@@ -63,9 +64,10 @@ jobs:
                 }
               `, {
                 projectId: PROJECT_ID,
-                itemId: `PVTI_${issue.number}`,
+                itemId: issue.id,
                 fieldId: FIELD_ID,
                 optionId: REVIEW_OPTION_ID
               });
             }
+      
       
