@@ -28,7 +28,7 @@ jobs:
 
       - name: Get Wiki Summary
         id: get_wiki_summary
-        run: python .github/workflows/get_wiki_summary.py
+        run: python .github/workflows/summarize_wiki.py
 
       - name: Send Issue Message and Wiki Summary to OpenAI
         id: openai_response
