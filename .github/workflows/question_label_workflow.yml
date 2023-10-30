@@ -58,11 +58,11 @@ jobs:
         run: |
           ISSUE_MESSAGE=${{ steps.get_issue_message.outputs.result }}
           WIKI_SUMMARY=${{ steps.get_wiki_summary.outputs.summary }}
-          ESCAPED_ISSUE_MESSAGE=$(printf '%s' "$ISSUE_MESSAGE" | jq -Rs .)
-          ESCAPED_WIKI_SUMMARY=$(printf '%s' "$WIKI_SUMMARY" | jq -Rs .)
+          ESCAPED_ISSUE_MESSAGE=$(printf '%s' "$ISSUE_MESSAGE" | jq -Rs . | base64)
+          ESCAPED_WIKI_SUMMARY=$(printf '%s' "$WIKI_SUMMARY" | jq -Rs . | base64)
           echo "Escaped Issue Message: $ESCAPED_ISSUE_MESSAGE"
           echo "Escaped Wiki Summary: $ESCAPED_WIKI_SUMMARY"
-
+      
           RESPONSE=$(jq -n \
                           --arg issueMessage "$ESCAPED_ISSUE_MESSAGE" \
                           --arg wikiSummary "$ESCAPED_WIKI_SUMMARY" \
@@ -89,9 +89,9 @@ jobs:
                -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
                -d @-)
           
-          ANSWER=$(echo $RESPONSE | jq -r .choices[0].message.content)
+          ANSWER=$(echo $RESPONSE | jq -r .choices[0].message.content | base64 --decode)
           echo "Answer: $ANSWER"
-          echo "ANSWER=${ANSWER}" >> $GITHUB_ENV
+          echo "ANSWER=${ANSWER}" >> $GITHUB_ENV      
 
       - name: Escape Answer
         run: |
