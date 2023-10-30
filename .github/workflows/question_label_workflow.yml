@@ -57,7 +57,7 @@ jobs:
                               "messages": [
                                   {
                                       "role": "system",
-                                      "content": "Du bist ein Softwareentwickler. Die folgende Frage kommt aus einem Issue von GitHub zu unserem Beispielprojekt. Versuche die Frage basierend auf der Zusammenfassung der Wiki-Seite zu beantworten: $wikiSummary. Wenn die notwendigen Informationen nicht enthalten sind, antworte mit ausschließlich an den User @GregorBiswanger und frage ihn ob er hierbei helfen kann."
+                                      "content": "Du bist ein Softwareentwickler. Die folgende Frage kommt aus einem Issue von GitHub zu unserem Beispielprojekt. Versuche die Frage basierend auf der Zusammenfassung der Wiki-Seite zu beantworten: $wikiSummary. Wenn die notwendigen Informationen nicht enthalten sind, antworte ausschließlich an den User @GregorBiswanger und frage ihn ob er hierbei helfen kann."
                                   },
                                   {
                                       "role": "user",
