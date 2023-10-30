@@ -36,14 +36,19 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issueNumber = context.issue.number;
+            let issueNumber;
+            if (context.eventName === 'workflow_dispatch') {
+              issueNumber = ${{ github.event.inputs.issue_number }};
+            } else {
+              issueNumber = context.issue.number;
+            }
             const issue = await github.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber
             });
             return issue.data.body;
-
+      
       - name: Get Wiki Summary
         id: get_wiki_summary
         run: python .github/workflows/summarize_wiki.py
