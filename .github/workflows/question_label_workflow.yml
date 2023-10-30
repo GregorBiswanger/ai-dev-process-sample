@@ -1,0 +1,55 @@
+name: Question Label Workflow
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  handle_question:
+    if: github.event.label.name == 'question'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Get Commit Message
+        id: get_commit
+        run: |
+          commit_message=$(git log -1 --pretty=%B)
+          echo "::set-output name=message::$commit_message"
+
+      - name: Send Commit Message to OpenAI
+        id: openai_response
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const axios = require('axios');
+            const commit_message = "${{ steps.get_commit.outputs.message }}";
+            const response = await axios.post('https://api.openai.com/v1/engines/davinci/completions', {
+              prompt: commit_message,
+              max_tokens: 150
+            }, {
+              headers: {
+                'Authorization': `Bearer ${{ secrets.OPENAI_API_KEY }}`
+              }
+            });
+            return response.data.choices[0].text;
+
+      - name: Check Response and Comment on Issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            const response_text = "${{ steps.openai_response.outputs.result }}";
+            let comment_body = '';
+
+            if (response_text.includes('not enough information')) {
+              comment_body = '@GregorBiswanger eventuell kannst du hierbei helfen?';
+            } else {
+              comment_body = response_text;
+            }
+
+            github.rest.issues.createComment({
+              issue_number: issue_number,
+              body: comment_body
+            });
