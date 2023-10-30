@@ -71,7 +71,7 @@ jobs:
       if: env.LABEL == 'question'
       uses: actions/github-script@v3
       with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
+        github-token: ${{secrets.GHPROJECT_TOKEN}}
         script: |
           github.actions.createWorkflowDispatch({
             owner: context.repo.owner,
