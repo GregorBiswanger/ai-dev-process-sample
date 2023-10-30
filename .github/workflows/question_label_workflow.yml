@@ -19,7 +19,7 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          pip install beautifulsoup4 requests transformers
+          pip install beautifulsoup4 requests transformers torch
 
       - name: Fetch and Summarize Wiki Content
         id: wiki_summary
