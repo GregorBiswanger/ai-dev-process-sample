@@ -1,11 +1,16 @@
 name: Generate Documentation with OpenAI and Update Wiki
 
+# on:
+#   repository_dispatch:
+#     types: [pull_request_merged]
+
 on:
-  repository_dispatch:
-    types: [pull_request_merged]
+  pull_request:
+    types: [closed]
 
 jobs:
   generate_documentation:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
