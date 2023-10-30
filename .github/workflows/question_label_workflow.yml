@@ -12,6 +12,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install Python Dependencies
+        run: |
+          pip install beautifulsoup4 requests transformers torch
+
       - name: Get First Issue Message
         id: get_issue_message
         uses: actions/github-script@v3
