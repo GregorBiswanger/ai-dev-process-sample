@@ -102,19 +102,13 @@ jobs:
         run: |
           ESCAPED_ANSWER=$(printf '%s' "$ANSWER" | jq -Rs .)
           echo "ESCAPED_ANSWER=${ESCAPED_ANSWER}" >> $GITHUB_ENV
-
-
-      - name: Escape Answer
-        run: |
-          ESCAPED_ANSWER=$(printf '%s' "$ANSWER" | jq -Rs .)
-          echo "ESCAPED_ANSWER=${ESCAPED_ANSWER}" >> $GITHUB_ENV
         
       - name: Comment on Issue with OpenAI's Response
         uses: actions/github-script@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issueNumber = context.issue.number;
+            const issueNumber = process.env.ISSUE_NUMBER;
             let responseText = process.env.ESCAPED_ANSWER;
             responseText = responseText.split('__NEWLINE__').join('\n');
             github.issues.createComment({
