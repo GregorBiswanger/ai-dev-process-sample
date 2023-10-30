@@ -21,7 +21,7 @@ jobs:
 
     - name: Ermittle Inhalte und erstelle Dokumentation mit OpenAI
       run: |
-        PR_NUMBER=${{ github.event.client_payload.pr_number }}
+        PR_NUMBER=${{ github.event.pull_request.number }}
         echo "PR_NUMBER: $PR_NUMBER"
         
         git fetch origin main
