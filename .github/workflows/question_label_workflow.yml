@@ -20,20 +20,13 @@ jobs:
 
       - name: Send Commit Message to OpenAI
         id: openai_response
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const axios = require('axios');
-            const commit_message = "${{ steps.get_commit.outputs.message }}";
-            const response = await axios.post('https://api.openai.com/v1/engines/davinci/completions', {
-              prompt: commit_message,
-              max_tokens: 150
-            }, {
-              headers: {
-                'Authorization': `Bearer ${{ secrets.OPENAI_API_KEY }}`
-              }
-            });
-            return response.data.choices[0].text;
+        run: |
+          response=$(curl -s -X POST "https://api.openai.com/v1/engines/davinci/completions" \
+            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"prompt\": \"${{ steps.get_commit.outputs.message }}\", \"max_tokens\": 150}")
+          answer=$(echo $response | jq -r '.choices[0].text')
+          echo "::set-output name=result::$answer"
 
       - name: Check Response and Comment on Issue
         uses: actions/github-script@v6
