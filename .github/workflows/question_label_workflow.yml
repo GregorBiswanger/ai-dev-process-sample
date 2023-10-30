@@ -90,13 +90,19 @@ jobs:
                -d @-)
           
           echo "Response: $RESPONSE"
-          ANSWER=$(echo $RESPONSE | jq -r .choices[0].message.content | base64 --decode)
+          ANSWER=$(echo $RESPONSE | jq -r .choices[0].message.content)
           if [ -z "$ANSWER" ]; then
             echo "Die Antwort von OpenAI ist leer oder ungültig."
             exit 1
           fi
           ESCAPED_ANSWER=$(echo "$ANSWER" | sed ':a;N;$!ba;s/\n/__NEWLINE__/g')
           echo "ANSWER=$ESCAPED_ANSWER" >> $GITHUB_ENV
+
+      - name: Escape Answer
+        run: |
+          ESCAPED_ANSWER=$(printf '%s' "$ANSWER" | jq -Rs .)
+          echo "ESCAPED_ANSWER=${ESCAPED_ANSWER}" >> $GITHUB_ENV
+
 
       - name: Escape Answer
         run: |
