@@ -3,6 +3,11 @@ name: Question Label Workflow
 on:
   issues:
     types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue Number'
+        required: true
 
 jobs:
   handle_question:
@@ -20,6 +25,10 @@ jobs:
       - name: Install Python Dependencies
         run: |
           pip install beautifulsoup4 requests transformers torch
+
+      - name: Get Issue Number
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "ISSUE_NUMBER=${{ github.event.inputs.issue_number }}" >> $GITHUB_ENV
 
       - name: Get First Issue Message
         id: get_issue_message

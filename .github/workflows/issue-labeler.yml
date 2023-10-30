@@ -66,3 +66,19 @@ jobs:
             repo: context.repo.repo,
             labels: [process.env.LABEL]
           })
+
+    - name: Dispatch Question Label Workflow
+      if: env.LABEL == 'question'
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          github.actions.createWorkflowDispatch({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'question-label-workflow.yml', # Ersetzen Sie dies durch den tatsächlichen Dateinamen Ihres Workflows
+            ref: 'main', # Ersetzen Sie dies durch den gewünschten Branch
+            inputs: {
+              issue_number: context.issue.number.toString()
+            }
+          })
