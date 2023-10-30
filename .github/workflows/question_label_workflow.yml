@@ -12,50 +12,47 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: Get First Issue Message
+        id: get_issue_message
+        uses: actions/github-script@v3
         with:
-          python-version: '3.8'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = context.issue.number;
+            const issue = await github.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber
+            });
+            return issue.data.body;
 
-      - name: Install Python Dependencies
-        run: |
-          pip install beautifulsoup4 requests transformers torch
+      - name: Get Wiki Summary
+        id: get_wiki_summary
+        run: python .github/workflows/get_wiki_summary.py
 
-      - name: Fetch and Summarize Wiki Content
-        id: wiki_summary
-        run: |
-          summary=$(python .github/workflows/summarize_wiki.py)
-          echo "SUMMARY=${summary}" >> $GITHUB_ENV
-        shell: bash
-  
-      - name: Get Commit Message
-        id: get_commit
-        run: |
-          commit_message=$(git log -1 --pretty=%B)
-          echo "Commit Message: $commit_message"
-          echo "COMMIT_MESSAGE=${commit_message}" >> $GITHUB_ENV
-
-      - name: Send Commit Message and Wiki Summary to OpenAI
+      - name: Send Issue Message and Wiki Summary to OpenAI
         id: openai_response
         run: |
-          ESCAPED_CONTENT=$(printf '%s' "$COMMIT_MESSAGE" | jq -Rs .)
-          WIKI_SUMMARY="$SUMMARY"
-          echo "Escaped Content: $ESCAPED_CONTENT"
-          echo "Wiki Summary: $WIKI_SUMMARY"
+          ISSUE_MESSAGE="${{ steps.get_issue_message.outputs.result }}"
+          WIKI_SUMMARY="${{ steps.get_wiki_summary.outputs.summary }}"
+          ESCAPED_ISSUE_MESSAGE=$(printf '%s' "$ISSUE_MESSAGE" | jq -Rs .)
+          ESCAPED_WIKI_SUMMARY=$(printf '%s' "$WIKI_SUMMARY" | jq -Rs .)
+          echo "Escaped Issue Message: $ESCAPED_ISSUE_MESSAGE"
+          echo "Escaped Wiki Summary: $ESCAPED_WIKI_SUMMARY"
 
           RESPONSE=$(jq -n \
-                          --arg content "$ESCAPED_CONTENT" \
-                          --arg summary "$WIKI_SUMMARY" \
+                          --arg issueMessage "$ESCAPED_ISSUE_MESSAGE" \
+                          --arg wikiSummary "$ESCAPED_WIKI_SUMMARY" \
                           '{
                               "model": "gpt-4",
                               "messages": [
                                   {
                                       "role": "system",
-                                      "content": "Du bist ein Softwareentwickler. Die folgende Frage kommt aus einem Issue von GitHub zu unserem Beispielprojekt. Versuche die Frage basierend auf der Zusammenfassung der Wiki-Seite zu beantworten: " + $summary + ". Wenn die notwendigen Informationen nicht enthalten sind, antworte mit ausschließlich an den User @GregorBiswanger und frage ihn ob er hierbei helfen kann."
+                                      "content": "Du bist ein Softwareentwickler. Die folgende Frage kommt aus einem Issue von GitHub zu unserem Beispielprojekt. Versuche die Frage basierend auf der Zusammenfassung der Wiki-Seite zu beantworten: $wikiSummary. Wenn die notwendigen Informationen nicht enthalten sind, antworte mit ausschließlich an den User @GregorBiswanger und frage ihn ob er hierbei helfen kann."
                                   },
                                   {
                                       "role": "user",
-                                      "content": $content
+                                      "content": $issueMessage
                                   }
                               ],
                               "temperature": 1,
@@ -73,15 +70,14 @@ jobs:
           echo "Answer: $ANSWER"
           echo "ANSWER=${ANSWER}" >> $GITHUB_ENV
 
-      - name: Check Response and Comment on Issue
+      - name: Comment on Issue with OpenAI's Response
         uses: actions/github-script@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issueNumber = context.issue.number;
-            const responseText = process.env.ANSWER;
-            let commentBody = '';
-
+            let responseText = process.env.ANSWER;
+            responseText = responseText.split('__NEWLINE__').join('\n');
             github.issues.createComment({
               issue_number: issueNumber,
               owner: context.repo.owner,
