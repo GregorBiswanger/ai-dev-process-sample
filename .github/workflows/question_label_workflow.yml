@@ -34,7 +34,8 @@ jobs:
           text = ' '.join(p.get_text() for p in soup.find_all('p'))
           summarizer = pipeline("summarization")
           summary = summarizer(text, max_length=130, min_length=30, do_sample=False)[0]['summary_text']
-          print("::set-output name=summary::" + summary)
+          print(summary)
+          echo "SUMMARY=${summary}" >> $GITHUB_ENV
 
         shell: python
 
@@ -42,15 +43,16 @@ jobs:
         id: get_commit
         run: |
           commit_message=$(git log -1 --pretty=%B)
-          echo "::set-output name=message::$commit_message"
+          echo "Commit Message: $commit_message"
+          echo "COMMIT_MESSAGE=${commit_message}" >> $GITHUB_ENV
 
       - name: Send Commit Message and Wiki Summary to OpenAI
         id: openai_response
         run: |
-          ESCAPED_CONTENT=$(printf '%s' "${{ steps.get_commit.outputs.message }}" | jq -Rs .)
-          WIKI_SUMMARY="${{ steps.wiki_summary.outputs.summary }}"
-          echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
-          echo "WIKI_SUMMARY: $WIKI_SUMMARY"
+          ESCAPED_CONTENT=$(printf '%s' "$COMMIT_MESSAGE" | jq -Rs .)
+          WIKI_SUMMARY="$SUMMARY"
+          echo "Escaped Content: $ESCAPED_CONTENT"
+          echo "Wiki Summary: $WIKI_SUMMARY"
 
           RESPONSE=$(jq -n \
                           --arg content "$ESCAPED_CONTENT" \
@@ -79,8 +81,8 @@ jobs:
                -d @-)
           
           ANSWER=$(echo $RESPONSE | jq -r .choices[0].message.content)
-          ANSWER_ESCAPED=$(echo "$ANSWER" | sed ':a;N;$!ba;s/\n/__NEWLINE__/g')
-          echo "ANSWER=$ANSWER_ESCAPED" >> $GITHUB_ENV
+          echo "Answer: $ANSWER"
+          echo "ANSWER=${ANSWER}" >> $GITHUB_ENV
 
       - name: Check Response and Comment on Issue
         uses: actions/github-script@v3
@@ -88,8 +90,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issueNumber = context.issue.number;
-            let responseText = process.env.ANSWER;
-            responseText = responseText.split('__NEWLINE__').join('\n');
+            const responseText = process.env.ANSWER;
             let commentBody = '';
 
             github.issues.createComment({
