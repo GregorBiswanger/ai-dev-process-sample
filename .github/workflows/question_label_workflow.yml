@@ -37,8 +37,8 @@ jobs:
           print(summary)
           echo "SUMMARY=${summary}" >> $GITHUB_ENV
 
-        shell: python
-
+        shell: bash
+  
       - name: Get Commit Message
         id: get_commit
         run: |
