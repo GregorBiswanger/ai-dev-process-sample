@@ -12,26 +12,55 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install Python Dependencies
+        run: |
+          pip install beautifulsoup4 requests transformers
+
+      - name: Fetch and Summarize Wiki Content
+        id: wiki_summary
+        run: |
+          import requests
+          from bs4 import BeautifulSoup
+          from transformers import pipeline
+
+          WIKI_URL = "https://github.com/GregorBiswanger/ai-dev-process-sample/wiki"
+          response = requests.get(WIKI_URL)
+          soup = BeautifulSoup(response.content, 'html.parser')
+          text = ' '.join(p.get_text() for p in soup.find_all('p'))
+          summarizer = pipeline("summarization")
+          summary = summarizer(text, max_length=130, min_length=30, do_sample=False)[0]['summary_text']
+          print("::set-output name=summary::" + summary)
+
+        shell: python
+
       - name: Get Commit Message
         id: get_commit
         run: |
           commit_message=$(git log -1 --pretty=%B)
           echo "::set-output name=message::$commit_message"
 
-      - name: Send Commit Message to OpenAI
+      - name: Send Commit Message and Wiki Summary to OpenAI
         id: openai_response
         run: |
           ESCAPED_CONTENT=$(printf '%s' "${{ steps.get_commit.outputs.message }}" | jq -Rs .)
+          WIKI_SUMMARY="${{ steps.wiki_summary.outputs.summary }}"
           echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
+          echo "WIKI_SUMMARY: $WIKI_SUMMARY"
 
           RESPONSE=$(jq -n \
                           --arg content "$ESCAPED_CONTENT" \
+                          --arg summary "$WIKI_SUMMARY" \
                           '{
                               "model": "gpt-4",
                               "messages": [
                                   {
                                       "role": "system",
-                                      "content": "Du bist ein Softwareentwickler. Die folgende Frage kommt aus einem Issue von GitHub zu unserem Beispielprojekt. Versuche die Frage basierend auf den Informationen von der URL https://github.com/GregorBiswanger/ai-dev-process-sample/wiki zu beantworten. Wenn die notwendigen Informationen nicht enthalten sind, antworte mit ausschließlich an den User @GregorBiswanger und frage ihn ob er hierbei helfen kann."
+                                      "content": "Du bist ein Softwareentwickler. Die folgende Frage kommt aus einem Issue von GitHub zu unserem Beispielprojekt. Versuche die Frage basierend auf der Zusammenfassung der Wiki-Seite zu beantworten: " + $summary + ". Wenn die notwendigen Informationen nicht enthalten sind, antworte mit ausschließlich an den User @GregorBiswanger und frage ihn ob er hierbei helfen kann."
                                   },
                                   {
                                       "role": "user",
