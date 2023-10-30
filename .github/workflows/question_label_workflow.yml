@@ -21,13 +21,37 @@ jobs:
       - name: Send Commit Message to OpenAI
         id: openai_response
         run: |
-          response=$(curl -s -X POST "https://api.openai.com/v1/engines/davinci/completions" \
-            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"prompt\": \"${{ steps.get_commit.outputs.message }}\", \"max_tokens\": 150}")
-          answer=$(echo $response | jq -r '.choices[0].text')
-          answer_escaped=$(echo "$answer" | sed ':a;N;$!ba;s/\n/__NEWLINE__/g')
-          echo "ANSWER=$answer_escaped" >> $GITHUB_ENV
+          ESCAPED_CONTENT=$(printf '%s' "${{ steps.get_commit.outputs.message }}" | jq -Rs .)
+          echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
+
+          RESPONSE=$(jq -n \
+                          --arg content "$ESCAPED_CONTENT" \
+                          '{
+                              "model": "gpt-4",
+                              "messages": [
+                                  {
+                                      "role": "system",
+                                      "content": "Du bist ein Softwareentwickler. Die folgende Frage kommt aus einem Issue von GitHub zu unserem Beispielprojekt. Versuche die Frage basierend auf den Informationen von der URL https://github.com/GregorBiswanger/ai-dev-process-sample/wiki zu beantworten. Wenn die notwendigen Informationen nicht enthalten sind, antworte mit ausschließlich an den User @GregorBiswanger und frage ihn ob er hierbei helfen kann."
+                                  },
+                                  {
+                                      "role": "user",
+                                      "content": $content
+                                  }
+                              ],
+                              "temperature": 1,
+                              "max_tokens": 4096,
+                              "top_p": 1,
+                              "frequency_penalty": 0,
+                              "presence_penalty": 0
+                          }' | \
+          curl -X POST https://api.openai.com/v1/chat/completions \
+               -H "Content-Type: application/json" \
+               -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+               -d @-)
+          
+          ANSWER=$(echo $RESPONSE | jq -r .choices[0].message.content)
+          ANSWER_ESCAPED=$(echo "$ANSWER" | sed ':a;N;$!ba;s/\n/__NEWLINE__/g')
+          echo "ANSWER=$ANSWER_ESCAPED" >> $GITHUB_ENV
 
       - name: Check Response and Comment on Issue
         uses: actions/github-script@v3
@@ -39,15 +63,9 @@ jobs:
             responseText = responseText.split('__NEWLINE__').join('\n');
             let commentBody = '';
 
-            if (responseText.includes('not enough information')) {
-              commentBody = '@GregorBiswanger eventuell kannst du hierbei helfen?';
-            } else {
-              commentBody = responseText;
-            }
-
             github.issues.createComment({
               issue_number: issueNumber,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: commentBody
+              body: responseText
             });
