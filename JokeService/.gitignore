@@ -1,0 +1,44 @@
+# Binaries
+bin/
+obj/
+
+# Build results
+[Bb]uild/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+*.pdb
+
+# User-specific files
+*.suo
+*.user
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+
+# Visual Studio files
+.vs/
+*.vscode/
+
+# Test Results
+[Tt]est[Rr]esult*/
+*.testsettings
+
+# Resharper files
+_ReSharper*/
+
+# Rider files
+.idea/
+
+# Mac files
+.DS_Store
+
+# Logs
+*.log
+
+# OS generated files
+ehthumbs.db
+Thumbs.db
