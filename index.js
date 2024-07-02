@@ -1,12 +1,12 @@
 const http = require('http');
 
-// Array of developer jokes
+// Array of developer jokes in German
 const jokes = [
-  "Why do programmers prefer dark mode? Because light attracts bugs.",
-  "Why do Java developers wear glasses? Because they can't C#.",
-  "How many programmers does it take to change a light bulb? None, that's a hardware problem.",
-  "Why do programmers hate nature? It has too many bugs.",
-  "Why was the JavaScript developer sad? Because he didn't know how to Java."
+  "Warum lieben Programmierer dunkle Modi? Weil Licht Bugs anzieht.",
+  "Warum tragen Java-Entwickler Brillen? Weil sie nicht C# können.",
+  "Wie viele Programmierer braucht man, um eine Glühbirne zu wechseln? Keinen, das ist ein Hardwareproblem.",
+  "Warum hassen Programmierer die Natur? Sie hat zu viele Bugs.",
+  "Warum war der JavaScript-Entwickler traurig? Weil er nicht wusste, wie man Java macht."
 ];
 
 const server = http.createServer((req, res) => {
@@ -18,7 +18,7 @@ const server = http.createServer((req, res) => {
   } else {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/plain');
-    res.end('Hello World');
+    res.end('Hallo Welt');
   }
 });
 
