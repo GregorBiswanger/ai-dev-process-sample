@@ -1,11 +1,16 @@
 const http = require('http');
 
 const jokes = [
-  'Warum können Geister so schlecht lügen? Weil man durch sie hindurchsehen kann!',
-  'Warum können Seeräuber den Kreis nicht berechnen? Weil sie Pi raten!',
-  'Warum können Skelette keine Lügen erzählen? Weil sie keinen Körper haben, um sie zu verstecken!',
-  'Warum können Mathematiker so gut backen? Weil sie Pi lieben!',
-  'Warum können Computer keine guten Tänzer sein? Weil sie immer abstürzen!',
+  'Warum können Programmierer keine guten Tänzer sein? Weil sie immer den gleichen Schritt wiederholen!',
+  'Warum können Java-Entwickler keine Pausen einlegen? Weil sie keine Kaffeepause machen können!',
+  'Warum können Entwickler keine Geheimnisse bewahren? Weil sie immer alles debuggen müssen!',
+  'Warum können Programmierer keine guten Gärtner sein? Weil sie immer nur Bugs finden!',
+  'Warum können Entwickler keine guten Musiker sein? Weil sie immer nur auf den gleichen Tasten herumhacken!',
+  'Warum sind Entwickler wie Götter? Weil sie aus dem Nichts etwas erschaffen können!',
+  'Warum können Entwickler keine guten Köche sein? Weil sie immer nur Spaghetti-Code machen!',
+  'Warum können Entwickler keine guten Schriftsteller sein? Weil sie immer nur in einer Sprache schreiben!',
+  'Warum können Entwickler keine guten Architekten sein? Weil sie immer nur an der gleichen Struktur arbeiten!',
+  'Warum können Entwickler keine guten Lehrer sein? Weil sie immer nur in einer Schleife erklären!'
 ];
 
 const server = http.createServer((request, response) => {
