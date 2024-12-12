@@ -1,6 +1,0 @@
-@ai_dev_process_sample_HostAddress = http://localhost:5185
-
-GET {{ai_dev_process_sample_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
