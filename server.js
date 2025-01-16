@@ -1,11 +1,11 @@
 const http = require('http');
 
 const jokes = [
-    "Warum können Geister so schlecht lügen? Weil man durch sie hindurchsieht!",
-    "Was ist orange und läuft durch den Wald? Eine Wanderine.",
-    "Warum können Skelette so schlecht lügen? Weil sie leicht zu durchschauen sind.",
-    "Was macht ein Pirat am Computer? Er drückt die Enter-Taste.",
-    "Warum können Seeräuber keine Kreise zeichnen? Weil sie Pi raten."
+    "Warum benutzen Programmierer keine Sonnencreme? Weil sie nicht wollen, dass ihre Codes verbrennen.",
+    "Warum können Java-Entwickler keine Strg-Taste benutzen? Weil sie keine Kontrolle haben.",
+    "Wie viele Programmierer braucht man, um eine Glühbirne zu wechseln? Keinen, das ist ein Hardware-Problem.",
+    "Warum sind Programmierer so schlecht im Tennis? Weil sie immer nur Null-Pointer treffen.",
+    "Warum können Programmierer keine Witze erzählen? Weil sie immer nur Bugs einbauen."
 ];
 
 const server = http.createServer((req, res) => {
