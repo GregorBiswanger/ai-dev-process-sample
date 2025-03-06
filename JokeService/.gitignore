@@ -1,0 +1,41 @@
+﻿# ASP.NET Core
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# Rider
+.idea/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Auto-generated files
+Generated_Code/
+
+# Logs
+*.log
+
+# Npm packages
+node_modules/
+
+# Environment variables
+.env
+
+# DotNet
+*.swp
+*.swpx
+*.tmp
+*.temp
+*.pidb
+*.svclog
+*.sln.docstates
