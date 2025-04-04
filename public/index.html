@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joke App</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #joke {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="joke">Lade einen Witz...</div>
+    <button onclick="loadJoke()">Joke laden</button>
+
+    <script>
+        async function loadJoke() {
+            const response = await fetch('/api/jokes');
+            const data = await response.json();
+            document.getElementById('joke').textContent = data.joke;
+        }
+
+        // Lade einen Witz beim Start
+        loadJoke();
+    </script>
+</body>
+</html>
