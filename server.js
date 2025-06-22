@@ -10,6 +10,8 @@ const jokes = [
   'Warum können Geister so schlecht lügen? Weil man durch sie hindurchsehen kann!',
   'Warum können Seeräuber keinen Kreis zeichnen? Weil sie immer Pi raten!',
   'Warum können Elefanten nicht fliegen? Weil sie keinen Pilotenschein haben!',
+  'Warum können Elefanten nicht fliegen? Weil sie keinen Pilotenschein haben!',
+  'Warum können Elefanten nicht fliegen? Weil sie keinen Pilotenschein haben!',
 ];
 
 app.get('/api/jokes', (req, res) => {
