@@ -1,11 +1,17 @@
 const http = require('http');
 
 const jokes = [
-  { id: 1, joke: 'Warum können Geister so schlecht lügen? Weil man durch sie hindurchsieht.' },
+  {
+    id: 1,
+    joke: 'Warum können Geister so schlecht lügen? Weil man durch sie hindurchsieht.',
+  },
   { id: 2, joke: 'Was macht ein Pirat am Computer? Er drückt die Enter-Taste.' },
-  { id: 3, joke: 'Warum können Elefanten nicht fliegen? Weil sie zu schwer für den Flugzeugmodus sind.' },
+  {
+    id: 3,
+    joke: 'Warum können Elefanten nicht fliegen? Weil sie zu schwer für den Flugzeugmodus sind.',
+  },
   { id: 4, joke: 'Was ist orange und läuft durch den Wald? Eine Wanderine.' },
-  { id: 5, joke: 'Wie nennt man einen Bumerang, der nicht zurückkommt? Ein Stock.' }
+  { id: 5, joke: 'Wie nennt man einen Bumerang, der nicht zurückkommt? Ein Stock.' },
 ];
 
 const server = http.createServer((req, res) => {
