@@ -24,9 +24,10 @@ const jokes = [
   { id: 10, joke: 'Was macht ein Mathematiker im Garten? Wurzeln ziehen.' },
 ];
 
-app.get('/api/jokes', (req, res) => {
+app.get('/api/jokes', (request, response) => {
   const randomIndex = Math.floor(Math.random() * jokes.length);
-  res.json(jokes[randomIndex]);
+  const joke = jokes[randomIndex];
+  response.json(joke);
 });
 
 app.listen(PORT, () => {
