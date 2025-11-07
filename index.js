@@ -15,9 +15,9 @@ const jokes = [
   'Warum können Geheimagenten nie Tennis spielen? Weil sie ihre Schläger immer geheim halten.',
 ];
 
-app.get('/api/jokes', (req, res) => {
+app.get('/api/jokes', (request, response) => {
   const idx = Math.floor(Math.random() * jokes.length);
-  res.json({ joke: jokes[idx] });
+  response.json({ joke: jokes[idx] });
 });
 
 app.use((req, res) => {
