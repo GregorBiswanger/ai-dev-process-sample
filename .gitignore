@@ -1,0 +1,29 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.env
+.DS_Store
+/dist
+/build
+coverage/
+*.local
+*.env.*
+.idea/
+.vscode/
+*.tgz
+package-lock.json
+yarn.lock
+
+# Optional: OS/Editor/Tooling
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+
+# Optional: Test output
+/test-output/
+/test-results/
