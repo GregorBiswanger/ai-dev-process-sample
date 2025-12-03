@@ -15,42 +15,66 @@ jobs:
     - name: Send code to OpenAI for review
       id: openai_review
       run: |
+        set -euo pipefail
+
         git fetch origin
         CODE_DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --unified=0)
-        ESCAPED_CONTENT=$(printf '%s' "$CODE_DIFF" | jq -Rs .)
-        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
-        
-        REVIEW_RESPONSE=$(jq -n \
-                            --arg content "$ESCAPED_CONTENT" \
-                            '{
-                                "model": "gpt-4",
-                                "messages": [
-                                    {
-                                        "role": "system",
-                                        "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich exakt mit dem Text: Ich gebe den PR frei. Bei keinen ernsthaften Problemen, füge am Ende von deiner Antwort den exakt den Text: Ich gebe den PR frei. Wenn ernsthafte schwierigkeiten entdeckt wurden, schreibe auf keinen Fall den Text: Ich gebe den PR frei. Antworte im Format GitHub Flavored Markdown (GFM) und halte die Antwort kurz."
-                                    },
-                                    {
-                                        "role": "user",
-                                        "content": $content
-                                    }
-                                ],
-                                "temperature": 1,
-                                "max_tokens": 4096,
-                                "top_p": 1,
-                                "frequency_penalty": 0,
-                                "presence_penalty": 0
-                            }' | \
-        curl -X POST https://api.openai.com/v1/chat/completions \
-             -H "Content-Type: application/json" \
-             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-             -d @-)
-        
-        REVIEW_MESSAGE=$(echo $REVIEW_RESPONSE | jq -r .choices[0].message.content)
-        REVIEW_MESSAGE_ESCAPED=$(echo "$REVIEW_MESSAGE" | sed ':a;N;$!ba;s/\n/__NEWLINE__/g')
-        echo "REVIEW_MESSAGE=$REVIEW_MESSAGE_ESCAPED" >> $GITHUB_ENV
-        if [ -z "$REVIEW_MESSAGE" ]; then
-          REVIEW_MESSAGE="Es gab ein Problem bei der Überprüfung des Codes durch OpenAI. Bitte überprüfen Sie manuell."
+
+        # Optional: Wenn kein Diff, direkt freigeben
+        if [ -z "$CODE_DIFF" ]; then
+          REVIEW_MESSAGE="Ich gebe den PR frei."
+          echo "REVIEW_MESSAGE=$REVIEW_MESSAGE" >> $GITHUB_ENV
+          exit 0
         fi
+
+        REVIEW_RESPONSE=$(
+          jq -n \
+            --arg content "$CODE_DIFF" \
+            '{
+              "model": "gpt-4.1-mini",
+              "messages": [
+                {
+                  "role": "system",
+                  "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich exakt mit dem Text: Ich gebe den PR frei. Bei keinen ernsthaften Problemen, füge am Ende von deiner Antwort den exakt den Text: Ich gebe den PR frei. Wenn ernsthafte schwierigkeiten entdeckt wurden, schreibe auf keinen Fall den Text: Ich gebe den PR frei. Antworte im Format GitHub Flavored Markdown (GFM) und halte die Antwort kurz."
+                },
+                {
+                  "role": "user",
+                  "content": $content
+                }
+              ],
+              "temperature": 1,
+              "max_tokens": 4096,
+              "top_p": 1,
+              "frequency_penalty": 0,
+              "presence_penalty": 0
+            }' |
+          curl -sS https://api.openai.com/v1/chat/completions \
+               -H "Content-Type: application/json" \
+               -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+               -d @-
+        )
+
+        echo "Raw OpenAI response:"
+        echo "$REVIEW_RESPONSE"
+
+        # Fehlernachricht extrahieren, falls vorhanden
+        ERROR_MESSAGE=$(echo "$REVIEW_RESPONSE" | jq -r '.error.message // empty')
+
+        if [ -n "$ERROR_MESSAGE" ]; then
+          REVIEW_MESSAGE="OpenAI API Fehler: $ERROR_MESSAGE"
+        else
+          # content extrahieren, null vermeiden
+          REVIEW_MESSAGE=$(echo "$REVIEW_RESPONSE" | jq -r '.choices[0].message.content // empty')
+        fi
+
+        # Fallback, wenn content leer oder "null"
+        if [ -z "$REVIEW_MESSAGE" ] || [ "$REVIEW_MESSAGE" = "null" ]; then
+          REVIEW_MESSAGE="Es gab ein Problem bei der Überprüfung des Codes durch OpenAI. Bitte überprüfe manuell."
+        fi
+
+        # Für Env neue Zeilen escapen
+        REVIEW_MESSAGE_ESCAPED=$(printf '%s' "$REVIEW_MESSAGE" | sed ':a;N;$!ba;s/\n/__NEWLINE__/g')
+        echo "REVIEW_MESSAGE=$REVIEW_MESSAGE_ESCAPED" >> "$GITHUB_ENV"
 
     - name: Comment on PR with OpenAI's review
       uses: actions/github-script@v3
@@ -86,39 +110,3 @@ jobs:
       run: |
         echo "Review nicht bestanden. Der Merge des Pull Requests wird verhindert."
         exit 1
-    
-
-    # - name: Merge PR if review is positive
-    #   if: contains(env.REVIEW_MESSAGE, 'Ich gebe den PR frei') # Adjust this condition based on OpenAI's typical positive responses
-    #   uses: actions/github-script@v3
-    #   with:
-    #     github-token: ${{ secrets.GITHUB_TOKEN }}
-    #     script: |
-    #       const prNumber = ${{ github.event.pull_request.number }};
-    #       github.pulls.merge({
-    #         pull_number: prNumber,
-    #         owner: context.repo.owner,
-    #         repo: context.repo.repo
-    #       });
-
-    # - name: Trigger Repository Dispatch
-    #   if: contains(env.REVIEW_MESSAGE, 'Ich gebe den PR frei')
-    #   uses: actions/github-script@v3
-    #   with:
-    #     github-token: ${{ secrets.GITHUB_TOKEN }}
-    #     script: |
-    #       const pr = await github.pulls.get({
-    #         owner: context.repo.owner,
-    #         repo: context.repo.repo,
-    #         pull_number: ${{ github.event.pull_request.number }}
-    #       });
-    #       const lastCommitSha = pr.data.head.sha;
-    #       github.repos.createDispatchEvent({
-    #         owner: context.repo.owner,
-    #         repo: context.repo.repo,
-    #         event_type: 'pull_request_merged',
-    #         client_payload: {
-    #           pr_number: ${{ github.event.pull_request.number }},
-    #           last_commit_sha: lastCommitSha
-    #         }
-    #       });
