@@ -14,64 +14,83 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        ref: 'main'
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: 'main'
 
-    - name: Ermittle Inhalte und erstelle Dokumentation mit OpenAI
-      run: |
-        PR_NUMBER=${{ github.event.pull_request.number }}
-        echo "PR_NUMBER: $PR_NUMBER"
-        
-        git fetch origin main
-        git fetch origin pull/$PR_NUMBER/head:pr-$PR_NUMBER
-        git checkout pr-$PR_NUMBER
+      - name: Ermittle Inhalte und erstelle Dokumentation mit OpenAI
+        run: |
+          set -euo pipefail
 
-        CHANGED_CONTENT=""
-        FILES=$(find . -type f -not -path "./.github/*" -not -path "./.git/*")
-        for file in $FILES; do
-          CHANGED_CONTENT+=$(printf "\n\n### Datei: $file\n\n ")
-          CHANGED_CONTENT+=$(cat $file)
-        done
-        ESCAPED_CONTENT=$(printf '%s' "$CHANGED_CONTENT" | jq -Rs .)
-        echo "ESCAPED_CONTENT: $ESCAPED_CONTENT"
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          echo "PR_NUMBER: $PR_NUMBER"
 
-        DOC_RESPONSE=$(jq -n \
-                            --arg content "$ESCAPED_CONTENT" \
-                            '{
-                                "model": "gpt-4",
-                                "messages": [
-                                    {
-                                        "role": "system",
-                                        "content": "Du bist ein Software-Dokumentations-Experte. Erstelle eine Dokumentation basierend auf dem gegebenen Sourcecode. Erkläre dabei nicht den Inhalt vom Sourcecode selbst, sondern wie dieser Code verwendet werden kann. Antworte im Format GitHub Flavored Markdown (GFM)."
-                                    },
-                                    {
-                                        "role": "user",
-                                        "content": $content
-                                    }
-                                ],
-                                "temperature": 1,
-                                "max_tokens": 4096,
-                                "top_p": 1,
-                                "frequency_penalty": 0,
-                                "presence_penalty": 0
-                            }' | \
-        curl -X POST https://api.openai.com/v1/chat/completions \
-             -H "Content-Type: application/json" \
-             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-             -d @-)
-        
-        DOCUMENTATION=$(echo $DOC_RESPONSE | jq -r .choices[0].message.content)
-        mkdir -p documentation
-        echo "$DOCUMENTATION" > documentation/Home.md
+          git fetch origin main
+          git fetch origin pull/$PR_NUMBER/head:pr-$PR_NUMBER
+          git checkout pr-$PR_NUMBER
 
-    - name: Aktualisiere Wiki mit Dokumentation
-      uses: docker://decathlon/wiki-page-creator-action:latest
-      env:
-        GH_PAT: ${{ secrets.GHPROJECT_TOKEN }}
-        ACTION_MAIL: gregor.biswanger@web-enliven.de
-        ACTION_NAME: GregorBiswanger
-        OWNER: ${{ github.repository_owner }}
-        REPO_NAME: ai-dev-process-sample
-        MD_FOLDER: documentation
+          CHANGED_CONTENT=""
+          FILES=$(find . -type f -not -path "./.github/*" -not -path "./.git/*")
+          for file in $FILES; do
+            CHANGED_CONTENT+=$(printf "\n\n### Datei: %s\n\n" "$file")
+            CHANGED_CONTENT+=$(cat "$file")
+          done
+
+          DOC_RESPONSE=$(
+            jq -n \
+              --arg content "$CHANGED_CONTENT" \
+              '{
+                "model": "gpt-4.1-mini",
+                "messages": [
+                  {
+                    "role": "system",
+                    "content": "Du bist ein Software-Dokumentations-Experte. Erstelle eine Dokumentation basierend auf dem gegebenen Sourcecode. Erkläre dabei nicht den Inhalt vom Sourcecode selbst, sondern wie dieser Code verwendet werden kann. Antworte im Format GitHub Flavored Markdown (GFM)."
+                  },
+                  {
+                    "role": "user",
+                    "content": $content
+                  }
+                ],
+                "temperature": 1,
+                "max_tokens": 4096,
+                "top_p": 1,
+                "frequency_penalty": 0,
+                "presence_penalty": 0
+              }' |
+            curl -sS https://api.openai.com/v1/chat/completions \
+                 -H "Content-Type: application/json" \
+                 -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+                 -d @-
+          )
+
+          echo "Raw OpenAI response:"
+          echo "$DOC_RESPONSE"
+
+          # Fehlernachricht extrahieren, falls vorhanden
+          ERROR_MESSAGE=$(echo "$DOC_RESPONSE" | jq -r '.error.message // empty')
+
+          if [ -n "$ERROR_MESSAGE" ]; then
+            DOCUMENTATION="# Fehler bei der Dokumentationsgenerierung\n\nOpenAI API Fehler: $ERROR_MESSAGE"
+          else
+            # content extrahieren, null vermeiden
+            DOCUMENTATION=$(echo "$DOC_RESPONSE" | jq -r '.choices[0].message.content // empty')
+          fi
+
+          # Fallback, wenn content leer oder "null"
+          if [ -z "$DOCUMENTATION" ] || [ "$DOCUMENTATION" = "null" ]; then
+            DOCUMENTATION="# Fehler bei der Dokumentationsgenerierung\n\nDie Antwort der OpenAI API war leer oder ungültig. Bitte manuell prüfen."
+          fi
+
+          mkdir -p documentation
+          printf '%s\n' "$DOCUMENTATION" > documentation/Home.md
+
+      - name: Aktualisiere Wiki mit Dokumentation
+        uses: docker://decathlon/wiki-page-creator-action:latest
+        env:
+          GH_PAT: ${{ secrets.GHPROJECT_TOKEN }}
+          ACTION_MAIL: gregor.biswanger@web-enliven.de
+          ACTION_NAME: GregorBiswanger
+          OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ai-dev-process-sample
+          MD_FOLDER: documentation
