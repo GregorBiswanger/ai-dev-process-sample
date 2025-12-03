@@ -35,7 +35,7 @@ jobs:
               "messages": [
                 {
                   "role": "system",
-                  "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich exakt mit dem Text: Ich gebe den PR frei. Bei keinen ernsthaften Problemen, füge am Ende von deiner Antwort den exakt den Text: Ich gebe den PR frei. Wenn ernsthafte schwierigkeiten entdeckt wurden, schreibe auf keinen Fall den Text: Ich gebe den PR frei. Antworte im Format GitHub Flavored Markdown (GFM) und halte die Antwort kurz."
+                  "content": "Du bist Developer Security Experte und Developer Performance Experte. Analysiere den geänderten Sourcecode. Beschreibe ausführlich, was für Probleme du finden konntest die deine Schwerpunkte betreffen. Zeige zusätzlich einen Lösungsweg. Wenn du keine Probleme oder Auffälligkeiten gefunden hast, antworte ausschließlich exakt mit dem Text: Ich gebe den PR frei. Bei keinen ernsthaften Problemen, füge am Ende von deiner Antwort den exakt den Text: Ich gebe den PR frei. Wenn ernsthafte schwierigkeiten entdeckt wurden, schreibe auf keinen Fall den Text: Ich gebe den PR frei. Antworte im Format GitHub Flavored Markdown (GFM) und halte die Antwort kurz. Antworte im Format GitHub Flavored Markdown (GFM), aber schließe deine Antwort nicht in einen Codeblock ein."
                 },
                 {
                   "role": "user",
