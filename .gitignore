@@ -1,0 +1,15 @@
+# Node.js
+node_modules/
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+build/
+coverage/
+.DS_Store
+*.local
+*.log
+
+# Optional: VSCode
+.vscode/
