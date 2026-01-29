@@ -1,0 +1,36 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build output
+dist/
+build/
+out/
+
+# Coverage directory
+coverage/
+
+# Optional npm cache directory
+.npm/
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
