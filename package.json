@@ -1,0 +1,26 @@
+{
+  "name": "ai-dev-process-sample",
+  "version": "1.0.0",
+  "description": "Express Joke HTTP API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "echo \"No tests specified\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GregorBiswanger/ai-dev-process-sample.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/GregorBiswanger/ai-dev-process-sample/issues"
+  },
+  "homepage": "https://github.com/GregorBiswanger/ai-dev-process-sample#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
